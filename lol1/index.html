@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dial QR – Multi Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root {
+  --ink: #0d0d0d;
+  --paper: #f5f0e8;
+  --cream: #ede8dc;
+  --gold: #c9a84c;
+  --gold-light: #e8c96e;
+  --shadow: rgba(13,13,13,0.18);
+  --red: #c0392b;
+  --green: #27ae60;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100vh;
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(201,168,76,0.08) 0%, transparent 50%),
+    radial-gradient(circle at 85% 80%, rgba(176,48,48,0.06) 0%, transparent 50%);
+}
+
+/* Top nav bar */
+.top-nav {
+  background: var(--ink);
+  color: #fff;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 56px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.nav-brand { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 900; }
+.nav-brand span { color: var(--gold); }
+
+/* Tab bar */
+.tab-bar {
+  background: #fff;
+  border-bottom: 1.5px solid var(--cream);
+  display: flex;
+  padding: 0 20px;
+  gap: 4px;
+}
+.tab-btn {
+  padding: 14px 20px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #888;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  transition: color .2s, border-color .2s;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.tab-btn.active { color: var(--ink); border-bottom-color: var(--gold); }
+.tab-btn:hover:not(.active) { color: #555; }
+
+/* Content area */
+.content-area { padding: 32px 16px 80px; display: flex; flex-direction: column; align-items: center; }
+
+/* Header */
+header { text-align: center; margin-bottom: 40px; }
+header .eyebrow { font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase; color: var(--gold); font-weight: 600; margin-bottom: 8px; }
+header h1 { font-family: 'Playfair Display', serif; font-size: clamp(2rem, 6vw, 3.2rem); font-weight: 900; line-height: 1.1; color: var(--ink); }
+header h1 span { color: var(--gold); }
+header p.sub { margin-top: 10px; font-size: 14px; color: #666; font-weight: 300; }
+
+.card { background: #fff; border: 1.5px solid var(--cream); border-radius: 20px; padding: 36px 32px 32px; width: 100%; max-width: 520px; box-shadow: 0 8px 40px var(--shadow); }
+
+label { display: block; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600; color: #888; margin-bottom: 8px; }
+
+#numbers-container { margin-bottom: 16px; }
+.number-entry {
+  background: var(--paper);
+  border: 1.5px solid var(--cream);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+  position: relative;
+  transition: border-color .2s;
+}
+.number-entry:focus-within { border-color: var(--gold); }
+.entry-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.entry-num { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 700; color: var(--gold); }
+.btn-remove { background: none; border: 1.5px solid #e0d6c8; border-radius: 8px; color: #aaa; font-size: 13px; cursor: pointer; padding: 3px 10px; font-family: 'DM Sans', sans-serif; transition: border-color .2s, color .2s; }
+.btn-remove:hover { border-color: var(--red); color: var(--red); }
+
+.type-select-wrap { margin-bottom: 10px; }
+.type-select {
+  width: 100%;
+  border: 1.5px solid #e0d6c8;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+  transition: border-color .2s;
+}
+.type-select:focus { border-color: var(--gold); }
+
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 440px) { .field-row { grid-template-columns: 1fr; } }
+
+.input-wrap { position: relative; }
+.input-wrap .prefix { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 14px; color: var(--gold); pointer-events: none; }
+.input-wrap input {
+  width: 100%;
+  border: 1.5px solid #e0d6c8;
+  border-radius: 10px;
+  padding: 11px 12px 11px 34px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+  background: #fff;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+  -webkit-appearance: none;
+}
+.input-wrap input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.15); }
+
+.details-wrap { margin-top: 16px; }
+textarea#detail {
+  width: 100%;
+  border: 1.5px solid var(--cream);
+  border-radius: 12px;
+  padding: 13px 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  color: var(--ink);
+  background: var(--paper);
+  resize: vertical;
+  min-height: 76px;
+  line-height: 1.5;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+  -webkit-appearance: none;
+}
+textarea#detail:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.15); background: #fff; }
+
+.btn-add-number {
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  color: var(--gold);
+  border: 1.5px dashed var(--gold-light);
+  border-radius: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .2s, border-color .2s;
+  margin-bottom: 16px;
+  letter-spacing: 0.04em;
+}
+.btn-add-number:hover { background: rgba(201,168,76,0.08); border-color: var(--gold); }
+
+.btn-generate {
+  width: 100%;
+  padding: 15px;
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: background .2s, transform .1s;
+  margin-top: 4px;
+}
+.btn-generate:hover { background: #2a2a2a; }
+.btn-generate:active { transform: scale(0.98); }
+
+#result-section { display: none; width: 100%; max-width: 520px; margin-top: 32px; animation: fadeUp .4s ease both; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+#print-card { background: #fff; border: 1.5px solid var(--cream); border-radius: 20px; padding: 28px 28px 24px; box-shadow: 0 8px 40px var(--shadow); text-align: center; }
+.print-header { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1.5px solid var(--cream); }
+.print-brand { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; color: var(--ink); line-height: 1.2; }
+.print-brand span { color: var(--gold); }
+.print-sub { font-size: 13px; color: #888; margin-top: 4px; letter-spacing: 0.04em; }
+.detail-block { background: var(--paper); border-radius: 12px; padding: 12px 16px; font-size: 14px; color: #444; line-height: 1.6; text-align: left; margin-bottom: 20px; border-left: 3px solid var(--gold); }
+#qr-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-bottom: 20px; }
+.qr-item { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.qr-box { display: flex; justify-content: center; align-items: center; padding: 14px; background: var(--paper); border-radius: 14px; }
+.qr-box canvas, .qr-box img { border-radius: 6px; display: block; }
+.qr-name { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 700; color: var(--ink); letter-spacing: 0.02em; }
+.phone-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--ink); color: #fff; border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 600; letter-spacing: 0.03em; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.print-footer { margin-top: 4px; padding-top: 14px; border-top: 1.5px solid var(--cream); font-size: 13px; color: #aaa; letter-spacing: 0.1em; font-style: italic; }
+.print-footer strong { color: var(--gold); font-style: normal; font-size: 15px; }
+
+.action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+.btn-action { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 10px; border-radius: 12px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; border: none; transition: transform .1s, opacity .2s; }
+.btn-action:active { transform: scale(0.97); }
+.btn-action:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+.btn-download { background: var(--ink); color: #fff; box-shadow: 0 4px 14px rgba(13,13,13,0.2); }
+.btn-download:hover:not(:disabled) { background: #2a2a2a; }
+.btn-share { background: var(--gold); color: #fff; box-shadow: 0 4px 14px rgba(201,168,76,0.35); }
+.btn-share:hover:not(:disabled) { background: var(--gold-light); color: var(--ink); }
+.spin { width: 16px; height: 16px; border: 2.5px solid rgba(255,255,255,0.35); border-top-color: #fff; border-radius: 50%; animation: rot .6s linear infinite; display: none; }
+.btn-share .spin { border-top-color: var(--ink); }
+.busy .spin { display: inline-block; }
+.busy .ico { display: none; }
+@keyframes rot { to { transform: rotate(360deg); } }
+
+/* History Page */
+#history-page { display: none; width: 100%; max-width: 640px; }
+.history-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.history-header h2 { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 900; }
+.history-count { background: var(--gold); color: #fff; border-radius: 999px; font-size: 12px; font-weight: 700; padding: 3px 10px; }
+
+.history-empty { text-align: center; padding: 60px 20px; color: #aaa; }
+.history-empty div { font-size: 48px; margin-bottom: 12px; }
+.history-empty p { font-size: 14px; }
+
+.history-item {
+  background: #fff;
+  border: 1.5px solid var(--cream);
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 12px rgba(13,13,13,0.06);
+  animation: fadeUp .3s ease both;
+}
+.history-item-time { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); font-weight: 600; margin-bottom: 4px; }
+.history-item-nums { font-size: 15px; font-weight: 600; color: var(--ink); }
+.history-item-detail { font-size: 13px; color: #777; margin-top: 6px; line-height: 1.5; background: var(--paper); border-radius: 8px; padding: 8px 10px; border-left: 2px solid var(--gold); }
+.history-entries { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.history-entry-chip {
+  background: var(--ink);
+  color: #fff;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.history-entry-chip span { color: var(--gold-light); }
+
+/* Toast */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--ink); color: #fff; padding: 12px 24px; border-radius: 999px; font-size: 14px; font-weight: 500; transition: transform .3s ease; z-index: 9999; white-space: nowrap; max-width: 92vw; text-align: center; }
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 400px) { .card { padding: 24px 18px; } .action-row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<!-- Top Nav -->
+<div class="top-nav">
+  <div class="nav-brand">Dial <span>QR</span></div>
+</div>
+
+<!-- Tab Bar -->
+<div class="tab-bar">
+  <button class="tab-btn active" id="tab-generator" onclick="switchTab('generator')">⚡ QR Generator</button>
+  <button class="tab-btn" id="tab-history" onclick="switchTab('history')">📋 History</button>
+</div>
+
+<!-- Content -->
+<div class="content-area">
+
+  <!-- QR Generator Tab -->
+  <div id="generator-page" style="width:100%;display:flex;flex-direction:column;align-items:center;">
+    <header>
+      <div class="eyebrow">QR Generator</div>
+      <h1>Dial <span>QR</span></h1>
+      <p class="sub">Numbers, Emails, Socials & Links → One Card</p>
+    </header>
+
+    <div class="card">
+      <div id="numbers-container"></div>
+      <button class="btn-add-number" onclick="addEntry()">＋ &nbsp;Add Another Item</button>
+      <div class="details-wrap">
+        <label for="detail" style="margin-bottom:8px">Details <span style="font-weight:300;text-transform:none;letter-spacing:0">(optional – shown on card)</span></label>
+        <textarea id="detail" placeholder="Add a shared note or description…"></textarea>
+      </div>
+      <button class="btn-generate" onclick="generateQR()" style="margin-top:18px">⚡ Generate QR Code</button>
+    </div>
+
+    <div id="result-section">
+      <div id="print-card">
+        <div class="print-header">
+          <div class="print-brand">Naitik <span>Rakesh Kumar Jain</span></div>
+          <div class="print-sub">Salumber, Rajasthan</div>
+        </div>
+        <div class="detail-block" id="detail-display" style="display:none"></div>
+        <div id="qr-grid"></div>
+        <div class="print-footer"><strong>Thanks 🙏</strong><br>Scan QR code directly</div>
+      </div>
+      <div class="action-row">
+        <button class="btn-action btn-download" id="btn-dl" onclick="doDownload()">
+          <span class="ico">⬇️ &nbsp;Download</span>
+          <span class="spin"></span>
+        </button>
+        <button class="btn-action btn-share" id="btn-sh" onclick="doShare()">
+          <span class="ico">📤 &nbsp;Share</span>
+          <span class="spin"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- History Tab -->
+  <div id="history-page">
+    <div class="history-header">
+      <h2>📋 History</h2>
+      <span class="history-count" id="history-count">0</span>
+    </div>
+    <div id="history-list"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════
+   STORAGE
+══════════════════════════════════ */
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem('qr_history') || '[]'); } catch { return []; }
+}
+function saveHistory(arr) {
+  localStorage.setItem('qr_history', JSON.stringify(arr));
+}
+
+/* ══════════════════════════════════
+   TAB SWITCHING
+══════════════════════════════════ */
+function switchTab(tab) {
+  document.getElementById('generator-page').style.display = tab === 'generator' ? 'flex' : 'none';
+  document.getElementById('history-page').style.display = tab === 'history' ? 'block' : 'none';
+  document.getElementById('tab-generator').classList.toggle('active', tab === 'generator');
+  document.getElementById('tab-history').classList.toggle('active', tab === 'history');
+  if (tab === 'history') renderHistory();
+}
+
+/* ══════════════════════════════════
+   HISTORY
+══════════════════════════════════ */
+function renderHistory() {
+  const history = getHistory();
+  const container = document.getElementById('history-list');
+  document.getElementById('history-count').textContent = history.length;
+
+  if (history.length === 0) {
+    container.innerHTML = `
+      <div class="history-empty">
+        <div>📭</div>
+        <p>No history yet. Generate a QR code to see it here.</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = '';
+  [...history].reverse().forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'history-item';
+    const chips = item.entries.map(e => {
+      const icon = e.icon || '📞';
+      const label = e.badgeLabel || e.val || e.phone || '';
+      const nameStr = e.name ? e.name + ' – ' : '';
+      return `<div class="history-entry-chip"><span>${icon} ${nameStr}</span>${label}</div>`;
+    }).join('');
+
+    div.innerHTML = `
+      <div class="history-item-time">${new Date(item.time).toLocaleString('hi-IN')}</div>
+      <div class="history-item-nums">${item.entries.length} Item${item.entries.length > 1 ? 's' : ''} Generated</div>
+      <div class="history-entries">${chips}</div>
+      ${item.detail ? `<div class="history-item-detail">📝 ${item.detail}</div>` : ''}
+    `;
+    container.appendChild(div);
+  });
+}
+
+function addToHistory(entries, detail) {
+  const history = getHistory();
+  history.push({ time: new Date().toISOString(), entries, detail });
+  saveHistory(history);
+}
+
+/* ══════════════════════════════════
+   ENTRY MANAGEMENT
+══════════════════════════════════ */
+let entryCount = 0;
+
+const TYPE_CONFIG = {
+  phone:     { icon: '📞', placeholder: 'e.g. 9876543210', type: 'tel' },
+  email:     { icon: '✉️', placeholder: 'e.g. name@example.com', type: 'email' },
+  map:       { icon: '📍', placeholder: 'Address, City or Google Maps Link', type: 'text' },
+  youtube:   { icon: '▶️', placeholder: 'Channel handle e.g. @channel or URL', type: 'text' },
+  facebook:  { icon: '👤', placeholder: 'Facebook profile ID or Link', type: 'text' },
+  instagram: { icon: '📸', placeholder: 'Instagram @username or Link', type: 'text' },
+  whatsapp:  { icon: '💬', placeholder: 'WhatsApp No (e.g. 919876543210)', type: 'tel' },
+  telegram:  { icon: '✈️', placeholder: 'Telegram @username or Link', type: 'text' },
+  url:       { icon: '🌐', placeholder: 'e.g. https://example.com', type: 'url' }
+};
+
+function addEntry() {
+  entryCount++;
+  const id = entryCount;
+  const container = document.getElementById('numbers-container');
+  const div = document.createElement('div');
+  div.className = 'number-entry';
+  div.id = 'entry-' + id;
+  div.innerHTML = `
+    <div class="entry-header">
+      <span class="entry-num">Item ${id}</span>
+      ${id > 1 ? `<button class="btn-remove" onclick="removeEntry(${id})">✕ Remove</button>` : ''}
+    </div>
+    <div class="type-select-wrap">
+      <select id="type-${id}" class="type-select" onchange="updateEntryType(${id})">
+        <option value="phone">📞 Mobile Number</option>
+        <option value="email">✉️ Email ID</option>
+        <option value="map">📍 Map Location</option>
+        <option value="youtube">▶️ YouTube Channel</option>
+        <option value="facebook">👤 Facebook ID</option>
+        <option value="instagram">📸 Instagram ID</option>
+        <option value="whatsapp">💬 WhatsApp Number</option>
+        <option value="telegram">✈️ Telegram ID</option>
+        <option value="url">🌐 Web URL</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <div class="input-wrap">
+        <span class="prefix" id="prefix-${id}">📞</span>
+        <input type="tel" id="val-${id}" placeholder="e.g. 9876543210"
+          onkeydown="if(event.key==='Enter') generateQR()">
+      </div>
+      <div class="input-wrap">
+        <span class="prefix">🏷️</span>
+        <input type="text" id="name-${id}" placeholder="Label / Name (optional)" maxlength="30"
+          onkeydown="if(event.key==='Enter') generateQR()">
+      </div>
+    </div>
+  `;
+  container.appendChild(div);
+  document.getElementById('val-' + id).focus();
+  updateEntryLabels();
+}
+
+function updateEntryType(id) {
+  const select = document.getElementById('type-' + id);
+  const type = select.value;
+  const cfg = TYPE_CONFIG[type] || TYPE_CONFIG.phone;
+  
+  const prefix = document.getElementById('prefix-' + id);
+  const input = document.getElementById('val-' + id);
+  
+  prefix.textContent = cfg.icon;
+  input.placeholder = cfg.placeholder;
+  input.type = cfg.type;
+}
+
+function removeEntry(id) {
+  const el = document.getElementById('entry-' + id);
+  if (el) el.remove();
+  updateEntryLabels();
+}
+
+function updateEntryLabels() {
+  document.querySelectorAll('.number-entry').forEach((el, i) => {
+    const label = el.querySelector('.entry-num');
+    if (label) label.textContent = 'Item ' + (i + 1);
+  });
+}
+
+/* ══════════════════════════════════
+   FORMAT QR CONTENT
+══════════════════════════════════ */
+function formatQRData(type, val) {
+  val = val.trim();
+  let qrText = '';
+  let badgeLabel = val;
+  let icon = '🌐';
+
+  switch (type) {
+    case 'phone':
+      const cleanPhone = val.replace(/[^\d+]/g, '');
+      qrText = 'tel:' + cleanPhone;
+      badgeLabel = val;
+      icon = '📞';
+      break;
+
+    case 'email':
+      qrText = 'mailto:' + val;
+      badgeLabel = val;
+      icon = '✉️';
+      break;
+
+    case 'map':
+      if (/^https?:\/\//i.test(val) || /^geo:/i.test(val)) {
+        qrText = val;
+      } else {
+        qrText = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(val);
+      }
+      badgeLabel = val.length > 22 ? val.substring(0, 20) + '…' : val;
+      icon = '📍';
+      break;
+
+    case 'youtube':
+      if (/^https?:\/\//i.test(val)) {
+        qrText = val;
+      } else if (val.startsWith('@')) {
+        qrText = 'https://www.youtube.com/' + val;
+      } else {
+        qrText = 'https://www.youtube.com/@' + val;
+      }
+      badgeLabel = val.startsWith('@') ? val : ('@' + val);
+      icon = '▶️';
+      break;
+
+    case 'facebook':
+      if (/^https?:\/\//i.test(val)) {
+        qrText = val;
+      } else {
+        qrText = 'https://www.facebook.com/' + val.replace(/^@/, '');
+      }
+      badgeLabel = val.replace(/^https?:\/\/(www\.)?facebook\.com\//i, '');
+      icon = '👤';
+      break;
+
+    case 'instagram':
+      if (/^https?:\/\//i.test(val)) {
+        qrText = val;
+      } else {
+        qrText = 'https://www.instagram.com/' + val.replace(/^@/, '');
+      }
+      badgeLabel = val.startsWith('@') ? val : ('@' + val.replace(/^https?:\/\/(www\.)?instagram\.com\//i, ''));
+      icon = '📸';
+      break;
+
+    case 'whatsapp':
+      const waNum = val.replace(/[^\d]/g, '');
+      qrText = 'https://wa.me/' + waNum;
+      badgeLabel = 'WA: ' + val;
+      icon = '💬';
+      break;
+
+    case 'telegram':
+      if (/^https?:\/\//i.test(val)) {
+        qrText = val;
+      } else {
+        qrText = 'https://t.me/' + val.replace(/^@/, '');
+      }
+      badgeLabel = val.startsWith('@') ? val : ('@' + val.replace(/^https?:\/\/t\.me\//i, ''));
+      icon = '✈️';
+      break;
+
+    case 'url':
+      if (/^https?:\/\//i.test(val)) {
+        qrText = val;
+      } else {
+        qrText = 'https://' + val;
+      }
+      badgeLabel = val;
+      icon = '🌐';
+      break;
+
+    default:
+      qrText = val;
+      badgeLabel = val;
+      icon = '🔗';
+  }
+
+  return { qrText, badgeLabel, icon };
+}
+
+/* ══════════════════════════════════
+   RENDER QR SAFELY
+══════════════════════════════════ */
+function renderQRCodeSafely(container, text, size) {
+  const levels = [
+    QRCode.CorrectLevel.H,
+    QRCode.CorrectLevel.Q,
+    QRCode.CorrectLevel.M,
+    QRCode.CorrectLevel.L
+  ];
+  let rendered = false;
+
+  for (const level of levels) {
+    try {
+      container.innerHTML = '';
+      new QRCode(container, {
+        text: text,
+        width: size,
+        height: size,
+        colorDark: '#0d0d0d',
+        colorLight: '#f5f0e8',
+        correctLevel: level
+      });
+      rendered = true;
+      break;
+    } catch (e) {
+      // Fallback ECC level
+    }
+  }
+
+  if (!rendered) {
+    throw new Error('Data capacity exceeded.');
+  }
+}
+
+/* ══════════════════════════════════
+   GENERATE QR
+══════════════════════════════════ */
+let capturedLabels = [];
+
+function generateQR() {
+  const allEntries = document.querySelectorAll('.number-entry');
+  const data = [];
+
+  for (const el of allEntries) {
+    const typeSelect = el.querySelector('.type-select');
+    const valInput   = el.querySelector('input[id^="val-"]');
+    const nameInput  = el.querySelector('input[id^="name-"]');
+
+    const type = typeSelect ? typeSelect.value : 'phone';
+    const val  = valInput ? valInput.value.trim() : '';
+    const name = nameInput ? nameInput.value.trim() : '';
+
+    if (val) {
+      const formatted = formatQRData(type, val);
+      data.push({
+        type,
+        val,
+        name,
+        qrText: formatted.qrText,
+        badgeLabel: formatted.badgeLabel,
+        icon: formatted.icon
+      });
+    }
+  }
+
+  if (data.length === 0) { toast('⚠️ Kum se kum ek value daalo'); return; }
+
+  const detail = document.getElementById('detail').value.trim();
+  capturedLabels = data.map(d => d.badgeLabel);
+
+  const grid = document.getElementById('qr-grid');
+  grid.innerHTML = '';
+  const qrSize = data.length === 1 ? 220 : 160;
+
+  try {
+    data.forEach((itemData) => {
+      const item = document.createElement('div');
+      item.className = 'qr-item';
+      const box = document.createElement('div');
+      box.className = 'qr-box';
+      const qrEl = document.createElement('div');
+      box.appendChild(qrEl);
+
+      renderQRCodeSafely(qrEl, itemData.qrText, qrSize);
+
+      const nameEl = document.createElement('div');
+      nameEl.className = 'qr-name';
+      nameEl.textContent = itemData.name || '';
+
+      const badge = document.createElement('div');
+      badge.className = 'phone-badge';
+      badge.innerHTML = `<span>${itemData.icon}</span> <span>${itemData.badgeLabel}</span>`;
+
+      item.appendChild(box);
+      if (itemData.name) item.appendChild(nameEl);
+      item.appendChild(badge);
+      grid.appendChild(item);
+    });
+
+    const det = document.getElementById('detail-display');
+    if (detail) { det.textContent = detail; det.style.display = 'block'; }
+    else         { det.style.display = 'none'; }
+
+    const rs = document.getElementById('result-section');
+    rs.style.display = 'block';
+    setTimeout(() => rs.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+    toast('✅ QR Code' + (data.length > 1 ? 's' : '') + ' ready!');
+
+    addToHistory(data, detail);
+  } catch (err) {
+    toast('⚠️ Error generating QR code.');
+  }
+}
+
+/* ══════════════════════════════════
+   CAPTURE / DOWNLOAD / SHARE
+══════════════════════════════════ */
+async function captureCard() {
+  await new Promise(r => setTimeout(r, 300));
+  const el = document.getElementById('print-card');
+  const canvas = await html2canvas(el, {
+    scale: 3, backgroundColor: '#ffffff', useCORS: true,
+    allowTaint: true, logging: false,
+    onclone: (doc) => {
+      const clone = doc.getElementById('print-card');
+      if (clone) clone.style.fontFamily = "'DM Sans', sans-serif";
+    }
+  });
+  return canvas.toDataURL('image/png');
+}
+
+async function doDownload() {
+  const btn = document.getElementById('btn-dl');
+  setBusy(btn, true);
+  try {
+    const dataURL = await captureCard();
+    const label = capturedLabels.length > 1
+      ? capturedLabels[0].replace(/[^a-zA-Z0-9]/g, '_') + '_+' + (capturedLabels.length - 1) + 'more'
+      : (capturedLabels[0] ? capturedLabels[0].replace(/[^a-zA-Z0-9]/g, '_') : 'code');
+    const a = document.createElement('a');
+    a.href = dataURL; a.download = 'QR_Naitik_' + label + '.png';
+    a.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
+    document.body.appendChild(a); a.click();
+    setTimeout(() => document.body.removeChild(a), 1500);
+    toast('📥 Downloaded!');
+  } catch(e) { toast('❌ Download failed.'); }
+  finally { setBusy(btn, false); }
+}
+
+async function doShare() {
+  const btn = document.getElementById('btn-sh');
+  setBusy(btn, true);
+  try {
+    const dataURL = await captureCard();
+    const label = capturedLabels.length > 1
+      ? capturedLabels[0].replace(/[^a-zA-Z0-9]/g, '_') + '_+' + (capturedLabels.length - 1) + 'more'
+      : (capturedLabels[0] ? capturedLabels[0].replace(/[^a-zA-Z0-9]/g, '_') : 'code');
+    const fileName = 'QR_Naitik_' + label + '.png';
+    const res = await fetch(dataURL);
+    const blob = await res.blob();
+    const file = new File([blob], fileName, { type: 'image/png' });
+
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: 'QR Code Card', text: 'Scan to access directly' });
+      toast('📤 Shared!'); return;
+    }
+    if (navigator.share) {
+      const a = document.createElement('a');
+      a.href = dataURL; a.download = fileName;
+      a.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
+      document.body.appendChild(a); a.click();
+      setTimeout(() => document.body.removeChild(a), 1500);
+      await navigator.share({ title: 'QR Code Card', text: 'Scan to access directly' });
+      toast('📤 Shared!'); return;
+    }
+    const w = window.open();
+    if (w) {
+      w.document.write('<html><body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="' + dataURL + '" style="max-width:100%;border-radius:16px" /></body></html>');
+      toast('🖼️ Opened in new tab');
+    } else { toast('❌ Popup blocked.'); }
+  } catch(e) { if (e.name !== 'AbortError') toast('❌ Share failed.'); }
+  finally { setBusy(btn, false); }
+}
+
+function setBusy(btn, on) {
+  btn.disabled = on;
+  btn.classList.toggle('busy', on);
+}
+
+let toastT;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove('show'), 3200);
+}
+
+// Init
+window.addEventListener('DOMContentLoaded', () => addEntry());
+</script>
+</body>
+</html>
