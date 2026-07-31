@@ -1,0 +1,60 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "qr_users": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$username": {
+        ".validate": "newData.hasChildren(['password', 'createdAt'])"
+      }
+    },
+
+    "qr_blocked": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+
+    "qr_tokens": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$username": {
+        ".validate": "newData.isNumber() && newData.val() >= 0"
+      }
+    },
+
+    "qr_host_notifications": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$notifId": {
+        ".validate": "newData.hasChildren(['id', 'time', 'user', 'read']) && newData.child('type').val() === 'number' || newData.child('type').val() === 'url' || !newData.child('type').exists()"
+      }
+    },
+
+    "qr_history": {
+      "$username": {
+        ".read": "auth != null && (auth.uid === $username || auth.token.host === true)",
+        ".write": "auth != null && auth.uid === $username",
+        "$entryId": {
+          ".validate": "newData.hasChildren(['time', 'entries', 'detail'])"
+        }
+      }
+    },
+
+    "qr_url_history": {
+      "$username": {
+        ".read": "auth != null && (auth.uid === $username || auth.token.host === true)",
+        ".write": "auth != null && auth.uid === $username",
+        "$entryId": {
+          ".validate": "newData.hasChildren(['time', 'url', 'detail'])"
+        }
+      }
+    },
+
+    "qr_host_creds": {
+      ".read": "auth != null && auth.token.host === true",
+      ".write": "auth != null && auth.token.host === true"
+    }
+  }
+}
