@@ -388,37 +388,37 @@ textarea#detail:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(20
 
 <script>
 /* ════════════════════════════════
-   DATA STORAGE (firebase.database)
+   DATA STORAGE (localStorage)
 ════════════════════════════════ */
 function getUsers() {
-  try { return JSON.parse(firebase.database.getItem('qr_users') || '{}'); } catch { return {}; }
+  try { return JSON.parse(localStorage.getItem('qr_users') || '{}'); } catch { return {}; }
 }
 function getBlockedUsers() {
-  try { return JSON.parse(firebase.database.getItem('qr_blocked') || '[]'); } catch { return []; }
+  try { return JSON.parse(localStorage.getItem('qr_blocked') || '[]'); } catch { return []; }
 }
 function getHistory(username) {
-  try { return JSON.parse(firebase.database.getItem('qr_history_' + username) || '[]'); } catch { return []; }
+  try { return JSON.parse(localStorage.getItem('qr_history_' + username) || '[]'); } catch { return []; }
 }
 function saveHistory(username, arr) {
-  firebase.database.setItem('qr_history_' + username, JSON.stringify(arr));
+  localStorage.setItem('qr_history_' + username, JSON.stringify(arr));
 }
 
 /* ── Token helpers ── */
 function getMyTokens() {
   if (!currentUser) return 0;
   try {
-    const tokens = JSON.parse(firebase.database.getItem('qr_tokens') || '{}');
+    const tokens = JSON.parse(localStorage.getItem('qr_tokens') || '{}');
     return typeof tokens[currentUser] === 'number' ? tokens[currentUser] : 0;
   } catch { return 0; }
 }
 function consumeOneToken() {
   if (!currentUser) return false;
   try {
-    const tokens = JSON.parse(firebase.database.getItem('qr_tokens') || '{}');
+    const tokens = JSON.parse(localStorage.getItem('qr_tokens') || '{}');
     const current = typeof tokens[currentUser] === 'number' ? tokens[currentUser] : 0;
     if (current <= 0) return false;
     tokens[currentUser] = current - 1;
-    firebase.database.setItem('qr_tokens', JSON.stringify(tokens));
+    localStorage.setItem('qr_tokens', JSON.stringify(tokens));
     return true;
   } catch { return false; }
 }
@@ -623,7 +623,7 @@ function addToHistory(entries, detail) {
 
 function addHostNotification(username, entries, detail) {
   try {
-    const notifs = JSON.parse(firebase.database.getItem('qr_host_notifications') || '[]');
+    const notifs = JSON.parse(localStorage.getItem('qr_host_notifications') || '[]');
     notifs.push({
       id: Date.now() + Math.random(),
       time: new Date().toISOString(),
@@ -632,7 +632,7 @@ function addHostNotification(username, entries, detail) {
       detail: detail,
       read: false
     });
-    firebase.database.setItem('qr_host_notifications', JSON.stringify(notifs));
+    localStorage.setItem('qr_host_notifications', JSON.stringify(notifs));
   } catch(e) {}
 }
 
