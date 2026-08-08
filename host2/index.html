@@ -473,16 +473,16 @@ body { font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(
    HOST CREDENTIALS STORAGE
 ════════════════════════════════ */
 const DEFAULT_HOST_ID = 'naitikjain240725@gmail.com';
-const DEFAULT_HOST_PW = 'Jain6799';
+const DEFAULT_HOST_PW = 'Jan6799';
 
 function getHostCreds() {
   try {
-    const c = JSON.parse(firebase.database.getItem('qr_host_creds') || 'null');
+    const c = JSON.parse(localStorage.getItem('qr_host_creds') || 'null');
     return c || { id: DEFAULT_HOST_ID, pw: DEFAULT_HOST_PW };
   } catch { return { id: DEFAULT_HOST_ID, pw: DEFAULT_HOST_PW }; }
 }
 function saveHostCreds(id, pw) {
-  firebase.database.setItem('qr_host_creds', JSON.stringify({ id, pw }));
+  localStorage.setItem('qr_host_creds', JSON.stringify({ id, pw }));
 }
 
 /* ════════════════════════════════
@@ -559,37 +559,37 @@ function showPage(name) {
    DATA HELPERS
 ════════════════════════════════ */
 function getUsers() {
-  try { return JSON.parse(firebase.database.getItem('qr_users') || '{}'); } catch { return {}; }
+  try { return JSON.parse(localStorage.getItem('qr_users') || '{}'); } catch { return {}; }
 }
-function saveUsers(u) { firebase.database.setItem('qr_users', JSON.stringify(u)); }
+function saveUsers(u) { localStorage.setItem('qr_users', JSON.stringify(u)); }
 function getBlockedUsers() {
-  try { return JSON.parse(firebase.database.getItem('qr_blocked') || '[]'); } catch { return []; }
+  try { return JSON.parse(localStorage.getItem('qr_blocked') || '[]'); } catch { return []; }
 }
-function saveBlockedUsers(b) { firebase.database.setItem('qr_blocked', JSON.stringify(b)); }
+function saveBlockedUsers(b) { localStorage.setItem('qr_blocked', JSON.stringify(b)); }
 function getNotifications() {
-  try { return JSON.parse(firebase.database.getItem('qr_host_notifications') || '[]'); } catch { return []; }
+  try { return JSON.parse(localStorage.getItem('qr_host_notifications') || '[]'); } catch { return []; }
 }
-function saveNotifications(n) { firebase.database.setItem('qr_host_notifications', JSON.stringify(n)); }
+function saveNotifications(n) { localStorage.setItem('qr_host_notifications', JSON.stringify(n)); }
 
 /* ── Token helpers ── */
 function getUserTokens(username) {
   try {
-    const tokens = JSON.parse(firebase.database.getItem('qr_tokens') || '{}');
+    const tokens = JSON.parse(localStorage.getItem('qr_tokens') || '{}');
     return typeof tokens[username] === 'number' ? tokens[username] : 0;
   } catch { return 0; }
 }
 function setUserTokens(username, count) {
   try {
-    const tokens = JSON.parse(firebase.database.getItem('qr_tokens') || '{}');
+    const tokens = JSON.parse(localStorage.getItem('qr_tokens') || '{}');
     tokens[username] = Math.max(0, parseInt(count) || 0);
-    firebase.database.setItem('qr_tokens', JSON.stringify(tokens));
+    localStorage.setItem('qr_tokens', JSON.stringify(tokens));
   } catch {}
 }
 function removeUserTokens(username) {
   try {
-    const tokens = JSON.parse(firebase.database.getItem('qr_tokens') || '{}');
+    const tokens = JSON.parse(localStorage.getItem('qr_tokens') || '{}');
     delete tokens[username];
-    firebase.database.setItem('qr_tokens', JSON.stringify(tokens));
+    localStorage.setItem('qr_tokens', JSON.stringify(tokens));
   } catch {}
 }
 
@@ -1048,7 +1048,7 @@ function deleteUser(username) {
   if (sessionStorage.getItem('qr_session_user') === username) {
     sessionStorage.removeItem('qr_session_user');
   }
-  firebase.database.removeItem('qr_history_' + username);
+  localStorage.removeItem('qr_history_' + username);
   removeUserTokens(username);
   renderUsersTable();
   refreshDashboard();
