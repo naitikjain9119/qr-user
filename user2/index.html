@@ -323,10 +323,10 @@ textarea#detail:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(20
    STORAGE
 ══════════════════════════════════ */
 function getHistory() {
-  try { return JSON.parse(localStorage.getItem('qr_history') || '[]'); } catch { return []; }
+  try { return JSON.parse(firebase.database.getItem('qr_history') || '[]'); } catch { return []; }
 }
 function saveHistory(arr) {
-  localStorage.setItem('qr_history', JSON.stringify(arr));
+  firebase.database.setItem('qr_history', JSON.stringify(arr));
 }
 
 /* ══════════════════════════════════
