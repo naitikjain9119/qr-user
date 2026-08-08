@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Host Panel – QR Generator by Naitik</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<!-- Firebase Compat SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+<style>
+:root {
+  --ink: #0d0d0d;
+  --paper: #f5f0e8;
+  --cream: #ede8dc;
+  --gold: #c9a84c;
+  --gold-light: #e8c96e;
+  --shadow: rgba(13,13,13,0.18);
+  --red: #c0392b;
+  --red-light: #fdf0ef;
+  --green: #27ae60;
+  --green-light: #eafaf1;
+  --blue: #2980b9;
+  --blue-light: #eaf4fb;
+  --purple: #8e44ad;
+  --purple-light: #f5eefa;
+  --orange: #e67e22;
+  --orange-light: #fef6ec;
+  --sidebar-bg: #111;
+  --sidebar-w: 260px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh;
+  background-image: radial-gradient(circle at 15% 20%, rgba(201,168,76,0.07) 0%, transparent 50%), radial-gradient(circle at 85% 80%, rgba(176,48,48,0.05) 0%, transparent 50%); }
+
+/* ══ LOGIN PAGE ══ */
+#login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+.login-box { background: #fff; border: 1.5px solid var(--cream); border-radius: 24px; padding: 48px 40px; width: 100%; max-width: 420px; box-shadow: 0 12px 50px var(--shadow); text-align: center; }
+.login-logo { font-family: 'Playfair Display', serif; font-size: 30px; font-weight: 900; color: var(--ink); margin-bottom: 6px; }
+.login-logo span { color: var(--gold); }
+.login-badge { display: inline-block; background: var(--ink); color: var(--gold); font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; padding: 4px 12px; border-radius: 999px; margin-bottom: 28px; }
+.login-field { margin-bottom: 16px; text-align: left; }
+.login-field label { display: block; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600; color: #888; margin-bottom: 7px; }
+.login-field input { width: 100%; border: 1.5px solid #e0d6c8; border-radius: 12px; padding: 13px 14px; font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--ink); background: var(--paper); outline: none; transition: border-color .2s, box-shadow .2s; }
+.login-field input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.15); background: #fff; }
+.btn-login { width: 100%; padding: 15px; background: var(--ink); color: #fff; border: none; border-radius: 12px; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; letter-spacing: 0.05em; cursor: pointer; margin-top: 8px; transition: background .2s; }
+.btn-login:hover { background: #2a2a2a; }
+.login-error { color: var(--red); font-size: 13px; margin-top: 10px; display: none; font-weight: 500; }
+
+/* ══ HOST APP LAYOUT ══ */
+#host-app { display: none; min-height: 100vh; }
+
+.sidebar {
+  position: fixed; top: 0; left: 0; width: var(--sidebar-w);
+  height: 100vh; background: var(--sidebar-bg); color: #fff;
+  display: flex; flex-direction: column; z-index: 200;
+  transition: transform .3s;
+}
+.sidebar-logo { padding: 28px 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.sidebar-logo-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; }
+.sidebar-logo-title span { color: var(--gold); }
+.sidebar-logo-sub { font-size: 11px; color: rgba(255,255,255,0.45); letter-spacing: 0.15em; text-transform: uppercase; margin-top: 4px; }
+.sidebar-nav { flex: 1; padding: 16px 12px; }
+.nav-item {
+  display: flex; align-items: center; gap: 13px;
+  padding: 13px 16px; border-radius: 12px;
+  font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.65);
+  cursor: pointer; transition: background .2s, color .2s;
+  margin-bottom: 4px; position: relative;
+}
+.nav-item:hover { background: rgba(255,255,255,0.07); color: #fff; }
+.nav-item.active { background: rgba(201,168,76,0.18); color: var(--gold); }
+.nav-item .nav-icon { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
+.nav-badge { background: var(--red); color: #fff; border-radius: 999px; font-size: 11px; font-weight: 700; padding: 2px 7px; margin-left: auto; min-width: 22px; text-align: center; }
+.sidebar-footer { padding: 16px 12px 24px; border-top: 1px solid rgba(255,255,255,0.08); }
+.host-info { font-size: 12px; color: rgba(255,255,255,0.4); padding: 0 6px; margin-bottom: 12px; }
+.host-info strong { color: rgba(255,255,255,0.7); display: block; font-size: 13px; margin-bottom: 2px; }
+.btn-logout-sidebar { width: 100%; padding: 11px; background: rgba(255,255,255,0.07); border: 1.5px solid rgba(255,255,255,0.12); border-radius: 10px; color: rgba(255,255,255,0.7); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: background .2s; }
+.btn-logout-sidebar:hover { background: rgba(255,255,255,0.14); color: #fff; }
+
+.hamburger { display: none; position: fixed; top: 14px; left: 14px; z-index: 300; background: var(--ink); border: none; border-radius: 10px; padding: 10px 12px; cursor: pointer; color: #fff; font-size: 18px; }
+.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 150; }
+
+.main-content { margin-left: var(--sidebar-w); min-height: 100vh; }
+.page-header { background: #fff; border-bottom: 1.5px solid var(--cream); padding: 20px 32px; display: flex; align-items: center; justify-content: space-between; }
+.page-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 900; }
+.page-subtitle { font-size: 13px; color: #888; margin-top: 3px; }
+.page-body { padding: 28px 32px; }
+
+/* ══ DASHBOARD ══ */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
+.stat-card { background: #fff; border: 1.5px solid var(--cream); border-radius: 16px; padding: 22px 24px; box-shadow: 0 2px 12px rgba(13,13,13,0.05); }
+.stat-icon { font-size: 28px; margin-bottom: 10px; }
+.stat-value { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 900; color: var(--ink); line-height: 1; }
+.stat-label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; margin-top: 4px; }
+.dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 768px) { .dashboard-grid { grid-template-columns: 1fr; } }
+.dash-section { background: #fff; border: 1.5px solid var(--cream); border-radius: 16px; padding: 20px; }
+.dash-section-title { font-size: 14px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #888; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+.dash-notif-item { padding: 12px 14px; border-radius: 10px; background: var(--paper); margin-bottom: 8px; cursor: pointer; transition: background .2s; border-left: 3px solid var(--gold); }
+.dash-notif-item:hover { background: var(--cream); }
+.dash-notif-item.unread { border-left-color: var(--red); background: #fdf6f5; }
+.dash-notif-user { font-size: 13px; font-weight: 700; color: var(--ink); }
+.dash-notif-meta { font-size: 11px; color: #aaa; margin-top: 2px; }
+.dash-empty { text-align: center; color: #ccc; font-size: 13px; padding: 20px 0; }
+
+/* ══ NOTIFICATIONS ══ */
+.notif-card {
+  background: #fff; border: 1.5px solid var(--cream); border-radius: 16px;
+  padding: 20px; margin-bottom: 12px; box-shadow: 0 2px 10px rgba(13,13,13,0.04);
+  animation: fadeUp .3s ease both; cursor: pointer; transition: box-shadow .2s;
+  position: relative;
+}
+.notif-card:hover { box-shadow: 0 4px 20px rgba(13,13,13,0.1); }
+.notif-card.unread { border-left: 4px solid var(--red); }
+.notif-card.read { opacity: 0.85; }
+.notif-top { display: flex; align-items: flex-start; justify-content: space-between; }
+.notif-user { font-size: 15px; font-weight: 700; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+.unread-dot { width: 8px; height: 8px; background: var(--red); border-radius: 50%; flex-shrink: 0; }
+.notif-time { font-size: 11px; color: #aaa; letter-spacing: 0.05em; }
+.notif-entries { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.notif-chip { background: var(--ink); color: #fff; border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; word-break: break-all; max-width: 100%; }
+.notif-chip span { color: var(--gold-light); margin-right: 2px; font-weight: 600; }
+.notif-go-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--gold); color: #000 !important; font-size: 11px; font-weight: 700;
+  padding: 3px 9px; border-radius: 6px; text-decoration: none !important;
+  margin-left: 6px; flex-shrink: 0; transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15); border: none; cursor: pointer;
+}
+.notif-go-btn:hover { background: var(--gold-light); transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.25); }
+
+.notif-detail { font-size: 13px; color: #555; margin-top: 10px; background: var(--paper); border-radius: 8px; padding: 8px 12px; border-left: 2px solid var(--gold); line-height: 1.5; }
+.notif-actions { margin-top: 14px; display: flex; gap: 8px; justify-content: flex-end; }
+.btn-sm { padding: 7px 16px; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: opacity .2s; }
+.btn-danger-sm { background: var(--red); color: #fff; }
+.btn-danger-sm:hover { opacity: 0.85; }
+.btn-read-sm { background: var(--paper); color: #555; border: 1.5px solid var(--cream); }
+.btn-read-sm:hover { background: var(--cream); }
+.notif-filters { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.filter-btn { padding: 7px 16px; border-radius: 999px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; border: 1.5px solid var(--cream); background: #fff; color: #666; transition: all .2s; }
+.filter-btn.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+/* ══ USER LOGIN MANAGEMENT ══ */
+.user-mgmt-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+.btn-primary { padding: 11px 20px; background: var(--ink); color: #fff; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: background .2s; }
+.btn-primary:hover { background: #2a2a2a; }
+.user-table-wrap { background: #fff; border: 1.5px solid var(--cream); border-radius: 16px; overflow: hidden; overflow-x: auto; }
+.user-table { width: 100%; border-collapse: collapse; }
+.user-table th { background: var(--paper); padding: 13px 16px; text-align: left; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; color: #888; border-bottom: 1.5px solid var(--cream); }
+.user-table td { padding: 14px 16px; border-bottom: 1px solid var(--cream); font-size: 14px; vertical-align: middle; }
+.user-table tr:last-child td { border-bottom: none; }
+.user-table tr:hover td { background: #fafaf8; }
+.status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.status-active { background: var(--green-light); color: var(--green); }
+.status-blocked { background: var(--red-light); color: var(--red); }
+.action-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.btn-xs { padding: 5px 12px; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: opacity .2s; white-space: nowrap; }
+.btn-edit-xs { background: var(--blue-light); color: var(--blue); }
+.btn-block-xs { background: #fff3cd; color: #856404; }
+.btn-unblock-xs { background: var(--green-light); color: var(--green); }
+.btn-delete-xs { background: var(--red-light); color: var(--red); }
+.btn-token-xs { background: var(--purple-light); color: var(--purple); }
+.btn-notifuser-xs { background: var(--orange-light); color: var(--orange); }
+.btn-xs:hover { opacity: 0.8; }
+.empty-table { text-align: center; color: #ccc; padding: 40px 20px; font-size: 14px; }
+.token-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--purple-light); color: var(--purple); border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 700; }
+
+/* ══ MODALS ══ */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); z-index: 500;
+  align-items: center; justify-content: center; padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal { background: #fff; border-radius: 20px; padding: 32px; width: 100%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); animation: fadeUp .25s ease; }
+.modal-title { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 900; margin-bottom: 20px; }
+.modal-field { margin-bottom: 14px; }
+.modal-field label { display: block; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; color: #888; margin-bottom: 7px; }
+.modal-field input { width: 100%; border: 1.5px solid #e0d6c8; border-radius: 10px; padding: 12px 14px; font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--ink); outline: none; transition: border-color .2s; background: var(--paper); }
+.modal-field input:focus { border-color: var(--gold); background: #fff; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+.btn-modal-cancel { padding: 11px 20px; background: var(--paper); color: #555; border: 1.5px solid var(--cream); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; }
+.btn-modal-save { padding: 11px 20px; background: var(--ink); color: #fff; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; }
+.btn-modal-danger { padding: 11px 20px; background: var(--red); color: #fff; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; }
+.modal-error { color: var(--red); font-size: 13px; margin-top: 8px; display: none; }
+
+/* ══ PASSWORD CHANGE ══ */
+.password-card { background: #fff; border: 1.5px solid var(--cream); border-radius: 20px; padding: 36px; max-width: 480px; box-shadow: 0 4px 20px rgba(13,13,13,0.06); }
+.pw-field { margin-bottom: 16px; }
+.pw-field label { display: block; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600; color: #888; margin-bottom: 7px; }
+.pw-field input { width: 100%; border: 1.5px solid #e0d6c8; border-radius: 10px; padding: 13px 14px; font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--ink); background: var(--paper); outline: none; transition: border-color .2s; }
+.pw-field input:focus { border-color: var(--gold); background: #fff; }
+.btn-save-pw { padding: 14px 28px; background: var(--ink); color: #fff; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 6px; transition: background .2s; }
+.btn-save-pw:hover { background: #2a2a2a; }
+.pw-msg { font-size: 13px; margin-top: 10px; display: none; font-weight: 500; }
+.pw-msg.success { color: var(--green); }
+.pw-msg.error { color: var(--red); }
+
+/* ══ USER NOTIFICATIONS VIEW ══ */
+.user-notif-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+.user-notif-back { padding: 9px 18px; background: var(--paper); border: 1.5px solid var(--cream); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; color: #555; }
+.user-notif-back:hover { background: var(--cream); }
+.user-notif-title { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 900; }
+.user-notif-badge { background: var(--orange); color: #fff; border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 700; }
+
+/* Toast */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--ink); color: #fff; padding: 12px 24px; border-radius: 999px; font-size: 14px; font-weight: 500; transition: transform .3s ease; z-index: 9999; white-space: nowrap; max-width: 92vw; text-align: center; }
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-overlay.open { display: block; }
+  .hamburger { display: block; }
+  .main-content { margin-left: 0; }
+  .page-header { padding: 16px 20px 16px 60px; }
+  .page-body { padding: 20px; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .user-table { font-size: 13px; }
+  .user-table th, .user-table td { padding: 10px 10px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN PAGE ══ -->
+<div id="login-page">
+  <div class="login-box">
+    <div class="login-logo">Dial <span>QR</span></div>
+    <div class="login-badge">🔑 Host Panel</div>
+    <div class="login-field">
+      <label>Host Email / Login ID</label>
+      <input type="email" id="host-login-id" placeholder="Enter host login ID" autocomplete="email">
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="host-login-pw" placeholder="Enter host password" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter') doHostLogin()">
+    </div>
+    <button class="btn-login" onclick="doHostLogin()">🔐 Login to Host Panel</button>
+    <div class="login-error" id="host-login-error">❌ Invalid login ID or password</div>
+  </div>
+</div>
+
+<!-- ══ HOST APP ══ -->
+<div id="host-app">
+  <button class="hamburger" id="hamburger-btn" onclick="toggleSidebar()">☰</button>
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-title">Dial <span>QR</span></div>
+      <div class="sidebar-logo-sub">Host Panel</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-item active" id="nav-dashboard" onclick="showPage('dashboard')">
+        <span class="nav-icon">📊</span> Dashboard
+        <span class="nav-badge" id="dashboard-badge" style="display:none">0</span>
+      </div>
+      <div class="nav-item" id="nav-notifications" onclick="showPage('notifications')">
+        <span class="nav-icon">🔔</span> Notifications
+        <span class="nav-badge" id="notif-badge" style="display:none">0</span>
+      </div>
+      <div class="nav-item" id="nav-users" onclick="showPage('users')">
+        <span class="nav-icon">👥</span> User Login
+      </div>
+      <div class="nav-item" id="nav-password" onclick="showPage('password')">
+        <span class="nav-icon">🔒</span> Host Password Change
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="host-info">
+        <strong id="host-id-display">host</strong>
+        Logged in as Host
+      </div>
+      <button class="btn-logout-sidebar" onclick="doHostLogout()">🚪 Logout</button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+
+    <!-- ── DASHBOARD PAGE ── -->
+    <div id="page-dashboard">
+      <div class="page-header">
+        <div>
+          <div class="page-title">📊 Dashboard</div>
+          <div class="page-subtitle">Overview of all activity</div>
+        </div>
+        <button onclick="refreshDashboard()" style="background:var(--paper);border:1.5px solid var(--cream);border-radius:10px;padding:9px 16px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;color:#555;">🔄 Refresh</button>
+      </div>
+      <div class="page-body">
+        <div class="stats-grid" id="stats-grid"></div>
+        <div class="dashboard-grid">
+          <div class="dash-section">
+            <div class="dash-section-title">
+              🔔 Recent Notifications
+              <span id="dash-unread-count" style="font-size:12px;color:var(--red);font-weight:700;"></span>
+            </div>
+            <div id="dash-notif-list"></div>
+          </div>
+          <div class="dash-section">
+            <div class="dash-section-title">👥 Registered Users</div>
+            <div id="dash-user-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── NOTIFICATIONS PAGE ── -->
+    <div id="page-notifications" style="display:none;">
+      <div class="page-header">
+        <div>
+          <div class="page-title">🔔 Notifications</div>
+          <div class="page-subtitle">All user QR generation activity</div>
+        </div>
+        <button onclick="deleteAllNotifications()" style="background:var(--red-light);border:1.5px solid #f5c6c2;border-radius:10px;padding:9px 16px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;color:var(--red);">🗑️ Delete All</button>
+      </div>
+      <div class="page-body">
+        <div class="notif-filters">
+          <button class="filter-btn active" id="filter-all" onclick="setNotifFilter('all')">All</button>
+          <button class="filter-btn" id="filter-unread" onclick="setNotifFilter('unread')">Unread</button>
+          <button class="filter-btn" id="filter-read" onclick="setNotifFilter('read')">Read</button>
+        </div>
+        <div id="notif-list"></div>
+      </div>
+    </div>
+
+    <!-- ── USER LOGIN PAGE ── -->
+    <div id="page-users" style="display:none;">
+      <div class="page-header">
+        <div>
+          <div class="page-title">👥 User Login Management</div>
+          <div class="page-subtitle">Create, edit, block, delete users and manage tokens</div>
+        </div>
+        <button class="btn-primary" onclick="openAddUserModal()">＋ Add New User</button>
+      </div>
+      <div class="page-body">
+        <div class="user-table-wrap">
+          <table class="user-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Username</th>
+                <th>Password</th>
+                <th>Tokens</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="user-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── USER NOTIFICATIONS VIEW PAGE ── -->
+    <div id="page-user-notifs" style="display:none;">
+      <div class="page-header">
+        <div>
+          <div class="page-title">🔔 User Notifications</div>
+          <div class="page-subtitle" id="user-notif-subtitle">Viewing notifications for user</div>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="user-notif-header">
+          <button class="user-notif-back" onclick="showPage('users')">← Back to Users</button>
+          <div class="user-notif-title" id="user-notif-heading"></div>
+          <span class="user-notif-badge" id="user-notif-count-badge">0</span>
+        </div>
+        <div id="user-notif-list"></div>
+      </div>
+    </div>
+
+    <!-- ── PASSWORD CHANGE PAGE ── -->
+    <div id="page-password" style="display:none;">
+      <div class="page-header">
+        <div>
+          <div class="page-title">🔒 Change Host Password</div>
+          <div class="page-subtitle">Update your host login credentials</div>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="password-card">
+          <div class="pw-field">
+            <label>Current Password</label>
+            <input type="password" id="pw-old" placeholder="Enter current password">
+          </div>
+          <div class="pw-field">
+            <label>New Login ID (Email)</label>
+            <input type="email" id="pw-new-id" placeholder="New login email (optional – leave blank to keep same)">
+          </div>
+          <div class="pw-field">
+            <label>New Password</label>
+            <input type="password" id="pw-new" placeholder="Enter new password">
+          </div>
+          <div class="pw-field">
+            <label>Confirm New Password</label>
+            <input type="password" id="pw-confirm" placeholder="Re-enter new password">
+          </div>
+          <button class="btn-save-pw" onclick="changeHostPassword()">💾 Save Changes</button>
+          <div class="pw-msg" id="pw-msg"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- main-content -->
+</div><!-- host-app -->
+
+<!-- ══ MODALS ══ -->
+
+<!-- Add / Edit User Modal -->
+<div class="modal-overlay" id="user-modal">
+  <div class="modal">
+    <div class="modal-title" id="user-modal-title">Add New User</div>
+    <div class="modal-field">
+      <label>Username</label>
+      <input type="text" id="modal-username" placeholder="Enter username" maxlength="40">
+    </div>
+    <div class="modal-field">
+      <label>Password</label>
+      <input type="password" id="modal-password" placeholder="Enter password">
+    </div>
+    <div class="modal-error" id="modal-error"></div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeUserModal()">Cancel</button>
+      <button class="btn-modal-save" id="modal-save-btn" onclick="saveUser()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Token Edit Modal -->
+<div class="modal-overlay" id="token-modal">
+  <div class="modal">
+    <div class="modal-title">🎟️ Edit Tokens</div>
+    <p id="token-modal-desc" style="font-size:14px;color:#666;margin-bottom:18px;line-height:1.6;"></p>
+    <div class="modal-field">
+      <label>Number of Tokens</label>
+      <input type="number" id="modal-token-count" placeholder="Enter token count" min="0" max="9999">
+    </div>
+    <p style="font-size:12px;color:#aaa;margin-top:-8px;margin-bottom:4px;">1 token = 1 QR code generation. Current tokens are shown above.</p>
+    <div class="modal-error" id="token-modal-error"></div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeTokenModal()">Cancel</button>
+      <button class="btn-modal-save" onclick="saveTokens()">💾 Save Tokens</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal">
+    <div class="modal-title">⚠️ Confirm Delete</div>
+    <p id="confirm-msg" style="color:#555;font-size:15px;line-height:1.6;margin-bottom:20px;"></p>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeConfirmModal()">Cancel</button>
+      <button class="btn-modal-danger" id="confirm-ok-btn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Notification Detail Modal -->
+<div class="modal-overlay" id="notif-detail-modal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-title">🔔 Notification Detail</div>
+    <div id="notif-detail-content"></div>
+    <div class="modal-actions" style="margin-top:20px;">
+      <button class="btn-modal-cancel" onclick="closeNotifDetailModal()">Close</button>
+      <button class="btn-modal-danger" id="notif-detail-delete-btn">🗑️ Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ════════════════════════════════
+   FIREBASE INITIALIZATION
+════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyDgYyQqSsRae7ax4-9quU_FLsMVlU6UDEI",
+  authDomain: "qr-genrate-c2d3d.firebaseapp.com",
+  databaseURL: "https://qr-genrate-c2d3d-default-rtdb.firebaseio.com",
+  projectId: "qr-genrate-c2d3d",
+  storageBucket: "qr-genrate-c2d3d.firebasestorage.app",
+  messagingSenderId: "147721476154",
+  appId: "1:147721476154:web:faee33b6a2374d29f5fd03"
+};
+
+// Initialize Firebase
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+const db = firebase.database();
+
+/* ════════════════════════════════
+   HOST CREDENTIALS & LOCAL STATE
+════════════════════════════════ */
+const DEFAULT_HOST_ID = 'naitikjain240725@gmail.com';
+const DEFAULT_HOST_PW = 'jain6799';
+
+let localHostCreds = { id: DEFAULT_HOST_ID, pw: DEFAULT_HOST_PW };
+let localUsers = {};
+let localBlocked = [];
+let localNotifications = [];
+let localTokens = {};
+
+/* ════════════════════════════════
+   FIREBASE REAL-TIME LISTENERS
+════════════════════════════════ */
+db.ref('qr_host_creds').on('value', (snapshot) => {
+  const val = snapshot.val();
+  if (val && val.id && val.pw) {
+    localHostCreds = val;
+  } else {
+    localHostCreds = { id: DEFAULT_HOST_ID, pw: DEFAULT_HOST_PW };
+  }
+});
+
+db.ref('qr_users').on('value', (snapshot) => {
+  localUsers = snapshot.val() || {};
+  if (document.getElementById('host-app').style.display !== 'none') {
+    refreshDashboard();
+    renderUsersTable();
+  }
+});
+
+db.ref('qr_blocked').on('value', (snapshot) => {
+  const val = snapshot.val();
+  localBlocked = Array.isArray(val) ? val : [];
+  if (document.getElementById('host-app').style.display !== 'none') {
+    refreshDashboard();
+    renderUsersTable();
+  }
+});
+
+db.ref('qr_host_notifications').on('value', (snapshot) => {
+  const val = snapshot.val();
+  if (Array.isArray(val)) {
+    localNotifications = val;
+  } else if (val && typeof val === 'object') {
+    localNotifications = Object.values(val);
+  } else {
+    localNotifications = [];
+  }
+  if (document.getElementById('host-app').style.display !== 'none') {
+    refreshDashboard();
+    renderNotifications();
+  }
+});
+
+db.ref('qr_tokens').on('value', (snapshot) => {
+  localTokens = snapshot.val() || {};
+  if (document.getElementById('host-app').style.display !== 'none') {
+    refreshDashboard();
+    renderUsersTable();
+  }
+});
+
+/* ════════════════════════════════
+   DATABASE GETTER / SETTER HELPERS
+════════════════════════════════ */
+function getHostCreds() {
+  return localHostCreds;
+}
+
+function saveHostCreds(id, pw) {
+  localHostCreds = { id, pw };
+  db.ref('qr_host_creds').set({ id, pw });
+}
+
+function getUsers() {
+  return localUsers;
+}
+
+function saveUsers(u) {
+  localUsers = u;
+  db.ref('qr_users').set(u);
+}
+
+function getBlockedUsers() {
+  return Array.isArray(localBlocked) ? localBlocked : [];
+}
+
+function saveBlockedUsers(b) {
+  localBlocked = b;
+  db.ref('qr_blocked').set(b);
+}
+
+function getNotifications() {
+  return Array.isArray(localNotifications) ? localNotifications : [];
+}
+
+function saveNotifications(n) {
+  localNotifications = n;
+  db.ref('qr_host_notifications').set(n);
+}
+
+/* ── Token helpers ── */
+function getUserTokens(username) {
+  return typeof localTokens[username] === 'number' ? localTokens[username] : 0;
+}
+
+function setUserTokens(username, count) {
+  const val = Math.max(0, parseInt(count) || 0);
+  localTokens[username] = val;
+  db.ref('qr_tokens/' + username).set(val);
+}
+
+function removeUserTokens(username) {
+  delete localTokens[username];
+  db.ref('qr_tokens/' + username).remove();
+}
+
+/* ════════════════════════════════
+   SMART ENTRY PARSER & "GO" DIRECT LINK
+════════════════════════════════ */
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function getNotificationEntries(n) {
+  if (Array.isArray(n.entries) && n.entries.length > 0) {
+    return n.entries;
+  }
+  // Fallback if entries array missing but single props exist
+  if (n.phone || n.url || n.link || n.email || n.value || n.target) {
+    return [{
+      name: n.name || n.title || n.label || '',
+      phone: n.phone,
+      value: n.value,
+      url: n.url,
+      link: n.link,
+      email: n.email,
+      type: n.type
+    }];
+  }
+  return [];
+}
+
+function parseEntry(e) {
+  if (typeof e === 'string' || typeof e === 'number') {
+    const val = String(e).trim();
+    return buildParsedResult('', val, detectTypeFromVal(val));
+  }
+  if (!e || typeof e !== 'object') {
+    return buildParsedResult('', 'N/A', 'text');
+  }
+
+  const name = e.name || e.title || e.label || e.type || e.category || '';
+  
+  // Extract value avoiding 'undefined'
+  let val = e.phone || e.value || e.url || e.link || e.email || e.text || e.data || e.number || e.target || e.query || e.location || '';
+  if (typeof val !== 'string' && typeof val !== 'number') {
+    val = '';
+  } else {
+    val = String(val).trim();
+  }
+
+  // Fallback search across object properties if val is empty
+  if (!val) {
+    for (let k in e) {
+      if (k !== 'name' && k !== 'type' && k !== 'title' && k !== 'label' && typeof e[k] === 'string' && e[k].trim()) {
+        val = e[k].trim();
+        break;
+      }
+    }
+  }
+
+  if (!val && name) val = name;
+  if (!val) val = 'N/A';
+
+  let type = (e.type || e.category || detectTypeFromVal(val)).toLowerCase();
+  return buildParsedResult(name, val, type, e);
+}
+
+function detectTypeFromVal(val) {
+  const v = val.toLowerCase();
+  if (v.includes('youtube.com') || v.includes('youtu.be')) return 'youtube';
+  if (v.includes('instagram.com') || v.startsWith('ig:')) return 'instagram';
+  if (v.includes('facebook.com') || v.includes('fb.me')) return 'facebook';
+  if (v.includes('t.me') || v.includes('telegram.me')) return 'telegram';
+  if (v.includes('wa.me') || v.includes('whatsapp.com')) return 'whatsapp';
+  if (v.includes('maps.google') || v.includes('google.com/maps') || v.includes('goo.gl/maps')) return 'map';
+  if (v.includes('@') && !v.includes('/')) return 'email';
+  if (v.startsWith('http://') || v.startsWith('https://') || v.startsWith('www.')) return 'url';
+  if (/^[\d\s\+\-\(\)]{7,15}$/.test(v)) return 'phone';
+  return 'url';
+}
+
+function buildParsedResult(name, val, type, rawObj) {
+  let icon = '🔗';
+  let targetUrl = '';
+
+  // Direct URL provided in raw object
+  if (rawObj) {
+    if (rawObj.url && /^https?:\/\//i.test(rawObj.url)) targetUrl = rawObj.url;
+    else if (rawObj.link && /^https?:\/\//i.test(rawObj.link)) targetUrl = rawObj.link;
+    else if (rawObj.mapUrl && /^https?:\/\//i.test(rawObj.mapUrl)) targetUrl = rawObj.mapUrl;
+  }
+
+  const cleanVal = val.trim();
+
+  if (type.includes('youtube')) {
+    icon = '▶️';
+    if (!targetUrl) targetUrl = /^https?:\/\//i.test(cleanVal) ? cleanVal : `https://www.youtube.com/results?search_query=${encodeURIComponent(cleanVal)}`;
+  } else if (type.includes('email')) {
+    icon = '✉️';
+    if (!targetUrl) targetUrl = cleanVal.startsWith('mailto:') ? cleanVal : `mailto:${cleanVal}`;
+  } else if (type.includes('map') || type.includes('location')) {
+    icon = '📍';
+    if (!targetUrl) targetUrl = /^https?:\/\//i.test(cleanVal) ? cleanVal : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanVal)}`;
+  } else if (type.includes('instagram')) {
+    icon = '📸';
+    if (!targetUrl) {
+      if (/^https?:\/\//i.test(cleanVal)) targetUrl = cleanVal;
+      else targetUrl = `https://instagram.com/${cleanVal.replace(/^@/, '')}`;
+    }
+  } else if (type.includes('facebook')) {
+    icon = '📘';
+    if (!targetUrl) {
+      if (/^https?:\/\//i.test(cleanVal)) targetUrl = cleanVal;
+      else targetUrl = `https://facebook.com/${cleanVal}`;
+    }
+  } else if (type.includes('whatsapp')) {
+    icon = '💬';
+    const digits = cleanVal.replace(/[^\d+]/g, '');
+    if (!targetUrl) {
+      if (/^https?:\/\//i.test(cleanVal)) targetUrl = cleanVal;
+      else targetUrl = `https://wa.me/${digits.replace('+', '')}`;
+    }
+  } else if (type.includes('telegram')) {
+    icon = '✈️';
+    if (!targetUrl) {
+      if (/^https?:\/\//i.test(cleanVal)) targetUrl = cleanVal;
+      else targetUrl = `https://t.me/${cleanVal.replace(/^@/, '')}`;
+    }
+  } else if (type.includes('phone') || type.includes('number')) {
+    icon = '📞';
+    const digits = cleanVal.replace(/[^\d+]/g, '');
+    if (!targetUrl) {
+      if (digits) targetUrl = `https://wa.me/${digits.replace('+', '')}`;
+      else targetUrl = `tel:${cleanVal}`;
+    }
+  } else { // URL or general
+    icon = '🌐';
+    if (!targetUrl) {
+      if (/^https?:\/\//i.test(cleanVal)) targetUrl = cleanVal;
+      else if (cleanVal.startsWith('www.')) targetUrl = `https://${cleanVal}`;
+      else if (cleanVal.includes('.') && !cleanVal.includes(' ')) targetUrl = `https://${cleanVal}`;
+      else if (cleanVal !== 'N/A') targetUrl = `https://www.google.com/search?q=${encodeURIComponent(cleanVal)}`;
+    }
+  }
+
+  return { name, val: cleanVal, type, icon, targetUrl };
+}
+
+function formatEntryChip(e) {
+  const p = parseEntry(e);
+  const nameLabel = p.name && p.name !== p.val ? `<span>${escapeHtml(p.name)}:</span> ` : '';
+  
+  let goBtn = '';
+  if (p.targetUrl && p.targetUrl !== '#') {
+    goBtn = `<a href="${escapeHtml(p.targetUrl)}" target="_blank" rel="noopener noreferrer" class="notif-go-btn" onclick="event.stopPropagation();">Go ➔</a>`;
+  }
+
+  return `<div class="notif-chip">${p.icon} ${nameLabel}${escapeHtml(p.val)}${goBtn}</div>`;
+}
+
+/* ════════════════════════════════
+   HOST LOGIN / LOGOUT
+════════════════════════════════ */
+function doHostLogin() {
+  const id = document.getElementById('host-login-id').value.trim();
+  const pw = document.getElementById('host-login-pw').value;
+  const creds = getHostCreds();
+  document.getElementById('host-login-error').style.display = 'none';
+  if (id === creds.id && pw === creds.pw) {
+    sessionStorage.setItem('qr_host_session', '1');
+    sessionStorage.setItem('qr_host_id', id);
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('host-app').style.display = 'block';
+    document.getElementById('host-id-display').textContent = id.split('@')[0];
+    showPage('dashboard');
+    toast('✅ Host login successful!');
+  } else {
+    document.getElementById('host-login-error').style.display = 'block';
+  }
+}
+
+function doHostLogout() {
+  sessionStorage.removeItem('qr_host_session');
+  sessionStorage.removeItem('qr_host_id');
+  document.getElementById('host-app').style.display = 'none';
+  document.getElementById('login-page').style.display = 'flex';
+  document.getElementById('host-login-id').value = '';
+  document.getElementById('host-login-pw').value = '';
+  closeSidebar();
+  toast('👋 Logged out');
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  if (sessionStorage.getItem('qr_host_session') === '1') {
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('host-app').style.display = 'block';
+    const savedId = sessionStorage.getItem('qr_host_id') || '';
+    document.getElementById('host-id-display').textContent = savedId.split('@')[0] || 'host';
+    showPage('dashboard');
+  }
+});
+
+/* ════════════════════════════════
+   SIDEBAR
+════════════════════════════════ */
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+/* ════════════════════════════════
+   PAGE ROUTING
+════════════════════════════════ */
+const PAGES = ['dashboard','notifications','users','user-notifs','password'];
+function showPage(name) {
+  PAGES.forEach(p => {
+    document.getElementById('page-' + p).style.display = p === name ? 'block' : 'none';
+    const navEl = document.getElementById('nav-' + p);
+    if (navEl) navEl.classList.toggle('active', p === name);
+  });
+  closeSidebar();
+  if (name === 'dashboard') refreshDashboard();
+  if (name === 'notifications') renderNotifications();
+  if (name === 'users') renderUsersTable();
+}
+
+/* ════════════════════════════════
+   BADGE UPDATE
+════════════════════════════════ */
+function updateBadges() {
+  const notifs = getNotifications();
+  const unread = notifs.filter(n => !n.read).length;
+  const nb = document.getElementById('notif-badge');
+  const dbEl = document.getElementById('dashboard-badge');
+  if (unread > 0) {
+    nb.textContent = unread; nb.style.display = 'inline';
+    dbEl.textContent = unread; dbEl.style.display = 'inline';
+  } else {
+    nb.style.display = 'none';
+    dbEl.style.display = 'none';
+  }
+}
+
+/* ════════════════════════════════
+   DASHBOARD
+════════════════════════════════ */
+function refreshDashboard() {
+  const users = getUsers();
+  const blocked = getBlockedUsers();
+  const notifs = getNotifications();
+  const unread = notifs.filter(n => !n.read).length;
+  const totalUsers = Object.keys(users).length;
+  const activeUsers = Object.keys(users).filter(u => !blocked.includes(u)).length;
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-icon">👥</div>
+      <div class="stat-value">${totalUsers}</div>
+      <div class="stat-label">Total Users</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">✅</div>
+      <div class="stat-value">${activeUsers}</div>
+      <div class="stat-label">Active Users</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🚫</div>
+      <div class="stat-value">${blocked.length}</div>
+      <div class="stat-label">Blocked Users</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🔔</div>
+      <div class="stat-value" style="color:${unread > 0 ? 'var(--red)' : 'inherit'}">${unread}</div>
+      <div class="stat-label">Unread Notifications</div>
+    </div>
+  `;
+
+  const dashNotifList = document.getElementById('dash-notif-list');
+  const recent = [...notifs].reverse().slice(0, 5);
+  if (recent.length === 0) {
+    dashNotifList.innerHTML = '<div class="dash-empty">No notifications yet</div>';
+  } else {
+    dashNotifList.innerHTML = recent.map(n => {
+      const entries = getNotificationEntries(n);
+      return `
+      <div class="dash-notif-item ${n.read ? '' : 'unread'}" onclick="openNotifFromDash('${n.id}')">
+        <div class="dash-notif-user">👤 ${escapeHtml(n.user)}</div>
+        <div class="dash-notif-meta">${new Date(n.time).toLocaleString('hi-IN')} · ${entries.length} item(s) generated</div>
+      </div>
+    `;
+    }).join('');
+  }
+
+  const dashUserList = document.getElementById('dash-user-list');
+  const userKeys = Object.keys(users);
+  if (userKeys.length === 0) {
+    dashUserList.innerHTML = '<div class="dash-empty">No users registered yet</div>';
+  } else {
+    dashUserList.innerHTML = userKeys.slice(0, 6).map(u => `
+      <div class="dash-notif-item" style="cursor:default;">
+        <div class="dash-notif-user">👤 ${escapeHtml(u)}</div>
+        <div class="dash-notif-meta">${blocked.includes(u) ? '🚫 Blocked' : '✅ Active'} · 🎟️ ${getUserTokens(u)} tokens</div>
+      </div>
+    `).join('');
+  }
+
+  updateBadges();
+  document.getElementById('dash-unread-count').textContent = unread > 0 ? unread + ' unread' : '';
+}
+
+function openNotifFromDash(id) {
+  showPage('notifications');
+  setTimeout(() => {
+    const el = document.getElementById('notif-card-' + id);
+    if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+  }, 100);
+}
+
+/* ════════════════════════════════
+   NOTIFICATIONS (All Users)
+════════════════════════════════ */
+let currentFilter = 'all';
+let currentNotifDetailId = null;
+
+function setNotifFilter(f) {
+  currentFilter = f;
+  ['all','unread','read'].forEach(x => {
+    document.getElementById('filter-' + x).classList.toggle('active', x === f);
+  });
+  renderNotifications();
+}
+
+function renderNotifications() {
+  const notifs = getNotifications();
+  const list = document.getElementById('notif-list');
+  let filtered = [...notifs].reverse();
+  if (currentFilter === 'unread') filtered = filtered.filter(n => !n.read);
+  if (currentFilter === 'read')   filtered = filtered.filter(n => n.read);
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div style="text-align:center;color:#ccc;padding:60px 20px;font-size:14px;">📭 No notifications found</div>`;
+    updateBadges(); return;
+  }
+
+  list.innerHTML = '';
+  filtered.forEach(n => {
+    const card = document.createElement('div');
+    card.className = 'notif-card ' + (n.read ? 'read' : 'unread');
+    card.id = 'notif-card-' + n.id;
+    const entries = getNotificationEntries(n);
+    const chips = entries.map(e => formatEntryChip(e)).join('');
+    
+    card.innerHTML = `
+      <div class="notif-top" onclick="openNotifDetail('${n.id}')">
+        <div class="notif-user">
+          ${!n.read ? '<span class="unread-dot"></span>' : ''}
+          👤 ${escapeHtml(n.user)}
+        </div>
+        <div class="notif-time">${new Date(n.time).toLocaleString('hi-IN')}</div>
+      </div>
+      <div class="notif-entries">${chips || '<div style="font-size:12px;color:#888;">No items details</div>'}</div>
+      ${n.detail ? `<div class="notif-detail">📝 ${escapeHtml(n.detail)}</div>` : ''}
+      <div class="notif-actions">
+        ${!n.read ? `<button class="btn-sm btn-read-sm" onclick="markRead('${n.id}',event)">✔ Mark Read</button>` : ''}
+        <button class="btn-sm btn-danger-sm" onclick="deleteNotif('${n.id}',event)">🗑️ Delete</button>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+  updateBadges();
+}
+
+function markRead(id, e) {
+  if (e) e.stopPropagation();
+  const notifs = getNotifications();
+  const n = notifs.find(x => String(x.id) === String(id));
+  if (n) n.read = true;
+  saveNotifications(notifs);
+  renderNotifications();
+  toast('✅ Marked as read');
+}
+
+function deleteNotif(id, e) {
+  if (e) e.stopPropagation();
+  const notifs = getNotifications().filter(x => String(x.id) !== String(id));
+  saveNotifications(notifs);
+  renderNotifications();
+  toast('🗑️ Notification deleted');
+}
+
+function deleteAllNotifications() {
+  if (!confirm('Are you sure you want to delete ALL notifications?')) return;
+  saveNotifications([]);
+  renderNotifications();
+  toast('🗑️ All notifications deleted');
+}
+
+function openNotifDetail(id) {
+  const notifs = getNotifications();
+  const n = notifs.find(x => String(x.id) === String(id));
+  if (!n) return;
+  n.read = true;
+  saveNotifications(notifs);
+  updateBadges();
+  currentNotifDetailId = id;
+
+  const entries = getNotificationEntries(n);
+  const chips = entries.map(e => formatEntryChip(e)).join('');
+
+  document.getElementById('notif-detail-content').innerHTML = `
+    <div style="margin-bottom:12px;">
+      <div style="font-size:12px;color:var(--gold);font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">User</div>
+      <div style="font-size:16px;font-weight:700;">👤 ${escapeHtml(n.user)}</div>
+    </div>
+    <div style="margin-bottom:12px;">
+      <div style="font-size:12px;color:#888;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">Time</div>
+      <div style="font-size:14px;">${new Date(n.time).toLocaleString('hi-IN')}</div>
+    </div>
+    <div style="margin-bottom:12px;">
+      <div style="font-size:12px;color:#888;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;">Generated Links / Items (${entries.length})</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">${chips || '<div style="font-size:13px;color:#888;">No item details available</div>'}</div>
+    </div>
+    ${n.detail ? `
+    <div>
+      <div style="font-size:12px;color:#888;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;">Details / Notes</div>
+      <div style="background:var(--paper);border-radius:10px;padding:12px 14px;border-left:3px solid var(--gold);font-size:14px;color:#444;line-height:1.6;">${escapeHtml(n.detail)}</div>
+    </div>` : ''}
+  `;
+  document.getElementById('notif-detail-delete-btn').onclick = () => {
+    deleteNotif(currentNotifDetailId, null);
+    closeNotifDetailModal();
+    renderNotifications();
+  };
+  document.getElementById('notif-detail-modal').classList.add('open');
+  renderNotifications();
+}
+
+function closeNotifDetailModal() {
+  document.getElementById('notif-detail-modal').classList.remove('open');
+}
+
+/* ════════════════════════════════
+   USER NOTIFICATIONS VIEW (per user)
+════════════════════════════════ */
+function openUserNotifications(username) {
+  const allNotifs = getNotifications();
+  const userNotifs = allNotifs.filter(n => n.user === username);
+
+  document.getElementById('user-notif-subtitle').textContent = 'Viewing notifications for: ' + username;
+  document.getElementById('user-notif-heading').textContent = '👤 ' + username;
+  document.getElementById('user-notif-count-badge').textContent = userNotifs.length + ' total';
+
+  const list = document.getElementById('user-notif-list');
+
+  if (userNotifs.length === 0) {
+    list.innerHTML = `<div style="text-align:center;color:#ccc;padding:60px 20px;font-size:14px;">📭 No notifications found for ${escapeHtml(username)}</div>`;
+  } else {
+    list.innerHTML = '';
+    [...userNotifs].reverse().forEach(n => {
+      const card = document.createElement('div');
+      card.className = 'notif-card ' + (n.read ? 'read' : 'unread');
+      const entries = getNotificationEntries(n);
+      const chips = entries.map(e => formatEntryChip(e)).join('');
+
+      card.innerHTML = `
+        <div class="notif-top">
+          <div class="notif-user">
+            ${!n.read ? '<span class="unread-dot"></span>' : ''}
+            📋 ${new Date(n.time).toLocaleString('hi-IN')}
+          </div>
+          <div class="notif-time">${n.read ? '✔ Read' : '● Unread'}</div>
+        </div>
+        <div class="notif-entries">${chips || '<div style="font-size:12px;color:#888;">No details</div>'}</div>
+        ${n.detail ? `<div class="notif-detail">📝 ${escapeHtml(n.detail)}</div>` : ''}
+        <div class="notif-actions">
+          ${!n.read ? `<button class="btn-sm btn-read-sm" onclick="markReadFromUserView('${n.id}','${username}')">✔ Mark Read</button>` : ''}
+          <button class="btn-sm btn-danger-sm" onclick="deleteNotifFromUserView('${n.id}','${username}')">🗑️ Delete</button>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+  }
+
+  PAGES.forEach(p => {
+    document.getElementById('page-' + p).style.display = p === 'user-notifs' ? 'block' : 'none';
+    const navEl = document.getElementById('nav-' + p);
+    if (navEl) navEl.classList.remove('active');
+  });
+  const navUsers = document.getElementById('nav-users');
+  if (navUsers) navUsers.classList.add('active');
+  closeSidebar();
+}
+
+function markReadFromUserView(id, username) {
+  const notifs = getNotifications();
+  const n = notifs.find(x => String(x.id) === String(id));
+  if (n) n.read = true;
+  saveNotifications(notifs);
+  updateBadges();
+  openUserNotifications(username);
+  toast('✅ Marked as read');
+}
+
+function deleteNotifFromUserView(id, username) {
+  const notifs = getNotifications().filter(x => String(x.id) !== String(id));
+  saveNotifications(notifs);
+  openUserNotifications(username);
+  toast('🗑️ Notification deleted');
+}
+
+/* ════════════════════════════════
+   USER MANAGEMENT
+════════════════════════════════ */
+let editingUsername = null;
+let tokenEditingUsername = null;
+
+function renderUsersTable() {
+  const users = getUsers();
+  const blocked = getBlockedUsers();
+  const tbody = document.getElementById('user-table-body');
+  const keys = Object.keys(users);
+
+  if (keys.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-table">No users yet. Click "Add New User" to create one.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = '';
+  keys.forEach((username, idx) => {
+    const isBlocked = blocked.includes(username);
+    const tokens = getUserTokens(username);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:#bbb;font-size:12px;">${idx + 1}</td>
+      <td><strong>${escapeHtml(username)}</strong></td>
+      <td style="font-family:monospace;letter-spacing:0.05em;">••••••••</td>
+      <td><span class="token-badge">🎟️ ${tokens}</span></td>
+      <td>
+        <span class="status-badge ${isBlocked ? 'status-blocked' : 'status-active'}">
+          ${isBlocked ? '🚫 Blocked' : '✅ Active'}
+        </span>
+      </td>
+      <td>
+        <div class="action-btns">
+          <button class="btn-xs btn-edit-xs" onclick="openEditUserModal('${username}')">✏️ Edit</button>
+          ${isBlocked
+            ? `<button class="btn-xs btn-unblock-xs" onclick="unblockUser('${username}')">🔓 Unblock</button>`
+            : `<button class="btn-xs btn-block-xs" onclick="blockUser('${username}')">🔒 Block</button>`}
+          <button class="btn-xs btn-delete-xs" onclick="confirmDeleteUser('${username}')">🗑️ Delete</button>
+          <button class="btn-xs btn-token-xs" onclick="openTokenModal('${username}')">🎟️ Tokens</button>
+          <button class="btn-xs btn-notifuser-xs" onclick="openUserNotifications('${username}')">🔔 Notifications</button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function openAddUserModal() {
+  editingUsername = null;
+  document.getElementById('user-modal-title').textContent = '➕ Add New User';
+  document.getElementById('modal-username').value = '';
+  document.getElementById('modal-password').value = '';
+  document.getElementById('modal-error').style.display = 'none';
+  document.getElementById('modal-username').disabled = false;
+  document.getElementById('modal-save-btn').textContent = 'Create User';
+  document.getElementById('user-modal').classList.add('open');
+}
+
+function openEditUserModal(username) {
+  editingUsername = username;
+  const users = getUsers();
+  document.getElementById('user-modal-title').textContent = '✏️ Edit User: ' + username;
+  document.getElementById('modal-username').value = username;
+  document.getElementById('modal-username').disabled = true;
+  document.getElementById('modal-password').value = users[username]?.password || '';
+  document.getElementById('modal-error').style.display = 'none';
+  document.getElementById('modal-save-btn').textContent = 'Save Changes';
+  document.getElementById('user-modal').classList.add('open');
+}
+
+function closeUserModal() {
+  document.getElementById('user-modal').classList.remove('open');
+}
+
+function saveUser() {
+  const username = document.getElementById('modal-username').value.trim();
+  const password = document.getElementById('modal-password').value;
+  const errEl = document.getElementById('modal-error');
+  errEl.style.display = 'none';
+
+  if (!username || !password) {
+    errEl.textContent = '⚠️ Username and password are required'; errEl.style.display = 'block'; return;
+  }
+
+  const users = getUsers();
+
+  if (!editingUsername) {
+    if (users[username]) {
+      errEl.textContent = '❌ Username already exists'; errEl.style.display = 'block'; return;
+    }
+    users[username] = { password, createdAt: new Date().toISOString() };
+    saveUsers(users);
+    toast('✅ User "' + username + '" created!');
+  } else {
+    if (!users[username]) { errEl.textContent = '❌ User not found'; errEl.style.display = 'block'; return; }
+    users[username].password = password;
+    saveUsers(users);
+    toast('✅ Password updated for "' + username + '"');
+  }
+
+  closeUserModal();
+  renderUsersTable();
+  refreshDashboard();
+}
+
+/* ── TOKEN MODAL ── */
+function openTokenModal(username) {
+  tokenEditingUsername = username;
+  const currentTokens = getUserTokens(username);
+  document.getElementById('token-modal-desc').textContent =
+    'User: ' + username + ' | Current tokens: ' + currentTokens + '\nEach token allows 1 QR code generation.';
+  document.getElementById('modal-token-count').value = currentTokens;
+  document.getElementById('token-modal-error').style.display = 'none';
+  document.getElementById('token-modal').classList.add('open');
+}
+
+function closeTokenModal() {
+  document.getElementById('token-modal').classList.remove('open');
+  tokenEditingUsername = null;
+}
+
+function saveTokens() {
+  const val = document.getElementById('modal-token-count').value;
+  const errEl = document.getElementById('token-modal-error');
+  errEl.style.display = 'none';
+
+  if (val === '' || isNaN(parseInt(val)) || parseInt(val) < 0) {
+    errEl.textContent = '⚠️ Please enter a valid number (0 or more)';
+    errEl.style.display = 'block'; return;
+  }
+
+  setUserTokens(tokenEditingUsername, parseInt(val));
+  toast('🎟️ Tokens updated for "' + tokenEditingUsername + '": ' + parseInt(val));
+  closeTokenModal();
+  renderUsersTable();
+  refreshDashboard();
+}
+
+function blockUser(username) {
+  const blocked = getBlockedUsers();
+  if (!blocked.includes(username)) blocked.push(username);
+  saveBlockedUsers(blocked);
+  if (sessionStorage.getItem('qr_session_user') === username) {
+    sessionStorage.removeItem('qr_session_user');
+  }
+  renderUsersTable();
+  refreshDashboard();
+  toast('🔒 "' + username + '" has been temporarily blocked');
+}
+
+function unblockUser(username) {
+  const blocked = getBlockedUsers().filter(u => u !== username);
+  saveBlockedUsers(blocked);
+  renderUsersTable();
+  refreshDashboard();
+  toast('🔓 "' + username + '" has been unblocked');
+}
+
+function confirmDeleteUser(username) {
+  document.getElementById('confirm-msg').textContent = 'Are you sure you want to delete user "' + username + '"? This cannot be undone.';
+  document.getElementById('confirm-ok-btn').onclick = () => { deleteUser(username); closeConfirmModal(); };
+  document.getElementById('confirm-modal').classList.add('open');
+}
+
+function deleteUser(username) {
+  const users = getUsers();
+  delete users[username];
+  saveUsers(users);
+  const blocked = getBlockedUsers().filter(u => u !== username);
+  saveBlockedUsers(blocked);
+  if (sessionStorage.getItem('qr_session_user') === username) {
+    sessionStorage.removeItem('qr_session_user');
+  }
+  db.ref('qr_history_' + username).remove();
+  removeUserTokens(username);
+  renderUsersTable();
+  refreshDashboard();
+  toast('🗑️ User "' + username + '" deleted');
+}
+
+function closeConfirmModal() {
+  document.getElementById('confirm-modal').classList.remove('open');
+}
+
+/* ════════════════════════════════
+   HOST PASSWORD CHANGE
+════════════════════════════════ */
+function changeHostPassword() {
+  const oldPw = document.getElementById('pw-old').value;
+  const newId = document.getElementById('pw-new-id').value.trim();
+  const newPw = document.getElementById('pw-new').value;
+  const confirm = document.getElementById('pw-confirm').value;
+  const msgEl = document.getElementById('pw-msg');
+  msgEl.className = 'pw-msg';
+  msgEl.style.display = 'none';
+  const creds = getHostCreds();
+
+  if (oldPw !== creds.pw) {
+    msgEl.textContent = '❌ Current password is incorrect';
+    msgEl.classList.add('error'); msgEl.style.display = 'block'; return;
+  }
+  if (!newPw) {
+    msgEl.textContent = '⚠️ Please enter a new password';
+    msgEl.classList.add('error'); msgEl.style.display = 'block'; return;
+  }
+  if (newPw !== confirm) {
+    msgEl.textContent = '❌ New passwords do not match';
+    msgEl.classList.add('error'); msgEl.style.display = 'block'; return;
+  }
+
+  const finalId = newId || creds.id;
+  saveHostCreds(finalId, newPw);
+  sessionStorage.setItem('qr_host_id', finalId);
+  document.getElementById('host-id-display').textContent = finalId.split('@')[0];
+  document.getElementById('pw-old').value = '';
+  document.getElementById('pw-new-id').value = '';
+  document.getElementById('pw-new').value = '';
+  document.getElementById('pw-confirm').value = '';
+  msgEl.textContent = '✅ Host credentials updated successfully!';
+  msgEl.classList.add('success'); msgEl.style.display = 'block';
+  toast('✅ Password changed!');
+}
+
+/* ════════════════════════════════
+   TOAST
+════════════════════════════════ */
+let toastT;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove('show'), 3200);
+}
+
+// Close modals on overlay click
+document.getElementById('user-modal').addEventListener('click', function(e) { if (e.target === this) closeUserModal(); });
+document.getElementById('confirm-modal').addEventListener('click', function(e) { if (e.target === this) closeConfirmModal(); });
+document.getElementById('notif-detail-modal').addEventListener('click', function(e) { if (e.target === this) closeNotifDetailModal(); });
+document.getElementById('token-modal').addEventListener('click', function(e) { if (e.target === this) closeTokenModal(); });
+</script>
+</body>
+</html>
