@@ -430,13 +430,13 @@ function addToHistory(entries, detail) {
 let entryCount = 0;
 
 const TYPE_CONFIG = {
-  phone:     { icon: '📞', placeholder: 'e.g. 9876543210', type: 'tel' },
+  phone:     { icon: '📞', placeholder: 'e.g. number', type: 'tel' },
   email:     { icon: '✉️', placeholder: 'e.g. name@example.com', type: 'email' },
   map:       { icon: '📍', placeholder: 'Address, City or Google Maps Link', type: 'text' },
   youtube:   { icon: '▶️', placeholder: 'Channel handle e.g. @channel or URL', type: 'text' },
   facebook:  { icon: '👤', placeholder: 'Facebook profile ID or Link', type: 'text' },
   instagram: { icon: '📸', placeholder: 'Instagram @username or Link', type: 'text' },
-  whatsapp:  { icon: '💬', placeholder: 'WhatsApp No (e.g. 919876543210)', type: 'tel' },
+  whatsapp:  { icon: '💬', placeholder: 'WhatsApp No (e.g. 91number)', type: 'tel' },
   telegram:  { icon: '✈️', placeholder: 'Telegram @username or Link', type: 'text' },
   url:       { icon: '🌐', placeholder: 'e.g. https://example.com', type: 'url' }
 };
@@ -469,7 +469,7 @@ function addEntry() {
     <div class="field-row">
       <div class="input-wrap">
         <span class="prefix" id="prefix-${id}">📞</span>
-        <input type="tel" id="val-${id}" placeholder="e.g. 9876543210"
+        <input type="tel" id="val-${id}" placeholder="e.g. number"
           onkeydown="if(event.key==='Enter') generateQR()">
       </div>
       <div class="input-wrap">
