@@ -592,6 +592,57 @@ function formatQRData(type, val) {
 }
 
 /* ══════════════════════════════════
+   DRAW CIRCULAR CENTER LOGO (xyz.png)
+══════════════════════════════════ */
+function addCenterLogo(canvas, size, logoSrc) {
+  const ctx = canvas.getContext('2d');
+  const img = new Image();
+  img.crossOrigin = 'Anonymous';
+  img.src = logoSrc;
+
+  img.onload = function() {
+    const logoSize = Math.floor(size * 0.24);
+    const center = size / 2;
+    const radius = logoSize / 2;
+
+    ctx.save();
+
+    // Draw solid circle background to prevent QR code pattern bleed-through
+    ctx.beginPath();
+    ctx.arc(center, center, radius + 2, 0, Math.PI * 2, false);
+    ctx.fillStyle = '#f5f0e8';
+    ctx.fill();
+
+    // Clip to circular shape
+    ctx.beginPath();
+    ctx.arc(center, center, radius, 0, Math.PI * 2, false);
+    ctx.closePath();
+    ctx.clip();
+
+    // Draw xyz.png inside circular clip
+    ctx.drawImage(img, center - radius, center - radius, logoSize, logoSize);
+    ctx.restore();
+
+    // Keep qrcodejs img element in sync if present
+    const imgTag = canvas.parentNode ? canvas.parentNode.querySelector('img') : null;
+    if (imgTag) {
+      imgTag.src = canvas.toDataURL();
+      imgTag.style.display = 'block';
+      canvas.style.display = 'none';
+    } else {
+      canvas.style.display = 'block';
+    }
+  };
+
+  img.onerror = function() {
+    const imgTag = canvas.parentNode ? canvas.parentNode.querySelector('img') : null;
+    if (imgTag) {
+      imgTag.style.display = 'block';
+    }
+  };
+}
+
+/* ══════════════════════════════════
    RENDER QR SAFELY
 ══════════════════════════════════ */
 function renderQRCodeSafely(container, text, size) {
@@ -623,6 +674,12 @@ function renderQRCodeSafely(container, text, size) {
 
   if (!rendered) {
     throw new Error('Data capacity exceeded.');
+  }
+
+  // Draw xyz.png at the exact center of QR Code in circular shape
+  const canvas = container.querySelector('canvas');
+  if (canvas) {
+    addCenterLogo(canvas, size, 'xyz.png');
   }
 }
 
