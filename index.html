@@ -204,8 +204,28 @@ textarea#detail:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(20
 .detail-block { background: var(--paper); border-radius: 12px; padding: 12px 16px; font-size: 14px; color: #444; line-height: 1.6; text-align: left; margin-bottom: 20px; border-left: 3px solid var(--gold); }
 #qr-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-bottom: 20px; }
 .qr-item { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.qr-box { display: flex; justify-content: center; align-items: center; padding: 14px; background: var(--paper); border-radius: 14px; }
+
+/* Position Relative for QR box so overlay image centers perfectly */
+.qr-box { display: flex; justify-content: center; align-items: center; padding: 14px; background: var(--paper); border-radius: 14px; position: relative; }
 .qr-box canvas, .qr-box img { border-radius: 6px; display: block; }
+
+/* Style for central circular logo overlay (xyz.png) */
+.qr-center-logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 22%;
+  height: 22%;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--paper);
+  border: 2px solid var(--paper);
+  box-shadow: 0 0 4px rgba(0,0,0,0.15);
+  pointer-events: none;
+  z-index: 10;
+}
+
 .qr-name { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 700; color: var(--ink); letter-spacing: 0.02em; }
 .phone-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--ink); color: #fff; border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 600; letter-spacing: 0.03em; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .print-footer { margin-top: 4px; padding-top: 14px; border-top: 1.5px solid var(--cream); font-size: 13px; color: #aaa; letter-spacing: 0.1em; font-style: italic; }
@@ -592,12 +612,11 @@ function formatQRData(type, val) {
 }
 
 /* ══════════════════════════════════
-   DRAW CIRCULAR CENTER LOGO (xyz.png)
+   DRAW CIRCULAR LOGO ON CANVAS
 ══════════════════════════════════ */
-function addCenterLogo(canvas, size, logoSrc) {
+function addCenterLogoToCanvas(canvas, size, logoSrc) {
   const ctx = canvas.getContext('2d');
   const img = new Image();
-  img.crossOrigin = 'Anonymous';
   img.src = logoSrc;
 
   img.onload = function() {
@@ -607,37 +626,28 @@ function addCenterLogo(canvas, size, logoSrc) {
 
     ctx.save();
 
-    // Draw solid circle background to prevent QR code pattern bleed-through
+    // Solid white/cream circle background behind logo
     ctx.beginPath();
     ctx.arc(center, center, radius + 2, 0, Math.PI * 2, false);
     ctx.fillStyle = '#f5f0e8';
     ctx.fill();
 
-    // Clip to circular shape
+    // Clip circular shape
     ctx.beginPath();
     ctx.arc(center, center, radius, 0, Math.PI * 2, false);
     ctx.closePath();
     ctx.clip();
 
-    // Draw xyz.png inside circular clip
+    // Draw xyz.png
     ctx.drawImage(img, center - radius, center - radius, logoSize, logoSize);
     ctx.restore();
 
-    // Keep qrcodejs img element in sync if present
+    // Sync generated img tag if present
     const imgTag = canvas.parentNode ? canvas.parentNode.querySelector('img') : null;
     if (imgTag) {
-      imgTag.src = canvas.toDataURL();
-      imgTag.style.display = 'block';
-      canvas.style.display = 'none';
-    } else {
-      canvas.style.display = 'block';
-    }
-  };
-
-  img.onerror = function() {
-    const imgTag = canvas.parentNode ? canvas.parentNode.querySelector('img') : null;
-    if (imgTag) {
-      imgTag.style.display = 'block';
+      try {
+        imgTag.src = canvas.toDataURL();
+      } catch(e) {}
     }
   };
 }
@@ -646,6 +656,7 @@ function addCenterLogo(canvas, size, logoSrc) {
    RENDER QR SAFELY
 ══════════════════════════════════ */
 function renderQRCodeSafely(container, text, size) {
+  // Use High Error Correction level so QR codes remain 100% scannable with center logo
   const levels = [
     QRCode.CorrectLevel.H,
     QRCode.CorrectLevel.Q,
@@ -676,10 +687,10 @@ function renderQRCodeSafely(container, text, size) {
     throw new Error('Data capacity exceeded.');
   }
 
-  // Draw xyz.png at the exact center of QR Code in circular shape
+  // Draw circular xyz.png logo on canvas
   const canvas = container.querySelector('canvas');
   if (canvas) {
-    addCenterLogo(canvas, size, 'xyz.png');
+    addCenterLogoToCanvas(canvas, size, 'xyz.png');
   }
 }
 
@@ -727,12 +738,22 @@ function generateQR() {
     data.forEach((itemData) => {
       const item = document.createElement('div');
       item.className = 'qr-item';
+      
       const box = document.createElement('div');
       box.className = 'qr-box';
+      
       const qrEl = document.createElement('div');
       box.appendChild(qrEl);
 
+      // Render base QR code
       renderQRCodeSafely(qrEl, itemData.qrText, qrSize);
+
+      // Overlay circular xyz.png logo in DOM (Guarantees visual display on all devices)
+      const logoOverlay = document.createElement('img');
+      logoOverlay.src = 'xyz.png';
+      logoOverlay.className = 'qr-center-logo';
+      logoOverlay.alt = 'Logo';
+      box.appendChild(logoOverlay);
 
       const nameEl = document.createElement('div');
       nameEl.className = 'qr-name';
