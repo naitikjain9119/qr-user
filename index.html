@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dial QR – Multi Generator</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<title>infosetu – Single Landing Page Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
@@ -45,6 +45,113 @@ body {
 }
 .nav-brand { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 900; }
 .nav-brand span { color: var(--gold); }
+
+/* Hamburger Menu Button */
+.hamburger-btn {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  transition: color 0.2s;
+}
+.hamburger-btn:hover { color: var(--gold); }
+
+/* Sidebar Drawer & Overlay */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(3px);
+  z-index: 1000;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.sidebar-overlay.active {
+  display: block;
+  opacity: 1;
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: -320px;
+  width: 300px;
+  height: 100%;
+  background: #fff;
+  z-index: 1001;
+  box-shadow: 4px 0 25px rgba(0, 0, 0, 0.25);
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+}
+.sidebar.active {
+  left: 0;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1.5px solid var(--cream);
+}
+.sidebar-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--ink);
+}
+.sidebar-close {
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: #888;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.sidebar-close:hover { color: var(--red); }
+
+.sidebar-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.sidebar-author-text {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.5;
+  background: var(--paper);
+  padding: 16px;
+  border-radius: 12px;
+  border-left: 4px solid var(--gold);
+}
+.sidebar-link-box {
+  background: #fff;
+  border: 1.5px solid var(--cream);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+.sidebar-link-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 12px;
+  word-break: break-all;
+}
 
 /* Tab bar */
 .tab-bar {
@@ -227,7 +334,7 @@ textarea#detail:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(20
 }
 
 .qr-name { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 700; color: var(--ink); letter-spacing: 0.02em; }
-.phone-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--ink); color: #fff; border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 600; letter-spacing: 0.03em; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.phone-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--ink); color: #fff; border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 600; letter-spacing: 0.03em; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .print-footer { margin-top: 4px; padding-top: 14px; border-top: 1.5px solid var(--cream); font-size: 13px; color: #aaa; letter-spacing: 0.1em; font-style: italic; }
 .print-footer strong { color: var(--gold); font-style: normal; font-size: 15px; }
 
@@ -281,6 +388,111 @@ textarea#detail:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(20
 }
 .history-entry-chip span { color: var(--gold-light); }
 
+/* SCANNED LANDING PAGE STYLES */
+#landing-page { display: none; width: 100%; max-width: 520px; margin: 0 auto; animation: fadeUp .4s ease both; }
+.landing-card {
+  background: #fff;
+  border: 1.5px solid var(--cream);
+  border-radius: 20px;
+  padding: 32px 24px;
+  box-shadow: 0 8px 40px var(--shadow);
+}
+.link-item-card {
+  background: var(--paper);
+  border: 1.5px solid var(--cream);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.link-item-card:hover { border-color: var(--gold); }
+.link-type-tag {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.link-label-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.link-value-text {
+  font-size: 13px;
+  color: #555;
+  word-break: break-all;
+  background: rgba(255,255,255,0.7);
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--cream);
+}
+.link-btn-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+.btn-copy {
+  flex: 1;
+  background: #fff;
+  color: var(--ink);
+  border: 1.5px solid #d0c8bc;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all .2s;
+}
+.btn-copy:hover { border-color: var(--ink); background: var(--paper); }
+
+.btn-go {
+  flex: 1;
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+  transition: background .2s;
+}
+.btn-go:hover { background: var(--gold); color: #fff; }
+
+.create-own-btn {
+  display: block;
+  width: 100%;
+  margin-top: 20px;
+  text-align: center;
+  background: transparent;
+  color: var(--gold);
+  border: 1.5px dashed var(--gold);
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+.create-own-btn:hover { background: rgba(201,168,76,0.1); }
+
 /* Toast */
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--ink); color: #fff; padding: 12px 24px; border-radius: 999px; font-size: 14px; font-weight: 500; transition: transform .3s ease; z-index: 9999; white-space: nowrap; max-width: 92vw; text-align: center; }
 .toast.show { transform: translateX(-50%) translateY(0); }
@@ -292,11 +504,33 @@ textarea#detail:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(20
 
 <!-- Top Nav -->
 <div class="top-nav">
-  <div class="nav-brand">Dial <span>QR</span></div>
+  <button class="hamburger-btn" onclick="openSidebar()" aria-label="Open Menu">☰</button>
+  <div class="nav-brand"> info <span>setu</span></div>
+  <div style="width: 24px;"></div>
+</div>
+
+<!-- Sidebar Overlay & Menu -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-title">About Creator</div>
+    <button class="sidebar-close" onclick="closeSidebar()">✕</button>
+  </div>
+  <div class="sidebar-content">
+    <div class="sidebar-author-text">
+      This website is made by NAITIK RAKESH KUMAR JAIN 
+    </div>
+    <div class="sidebar-link-box">
+      <div class="sidebar-link-text">naitikjain240725.vercel.app</div>
+      <a href="https://naitikjain240725.vercel.app" target="_blank" class="btn-go">
+        🚀 Go
+      </a>
+    </div>
+  </div>
 </div>
 
 <!-- Tab Bar -->
-<div class="tab-bar">
+<div class="tab-bar" id="app-tabs">
   <button class="tab-btn active" id="tab-generator" onclick="switchTab('generator')">⚡ QR Generator</button>
   <button class="tab-btn" id="tab-history" onclick="switchTab('history')">📋 History</button>
 </div>
@@ -308,8 +542,8 @@ textarea#detail:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(20
   <div id="generator-page" style="width:100%;display:flex;flex-direction:column;align-items:center;">
     <header>
       <div class="eyebrow">QR Generator</div>
-      <h1>Dial <span>QR</span></h1>
-      <p class="sub">Numbers, Emails, Socials & Links → One Card</p>
+      <h1> info <span>  setu <infon></h1>
+      <p class="sub">Numbers, Emails, Socials & Links → One Single QR Code</p>
     </header>
 
     <div class="card">
@@ -330,7 +564,7 @@ textarea#detail:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(20
         </div>
         <div class="detail-block" id="detail-display" style="display:none"></div>
         <div id="qr-grid"></div>
-        <div class="print-footer"><strong>Thanks 🙏</strong><br>Scan QR code directly</div>
+        <div class="print-footer"><strong>Thanks 🙏</strong><br>Scan QR code directly to view all links</div>
       </div>
       <div class="action-row">
         <button class="btn-action btn-download" id="btn-dl" onclick="doDownload()">
@@ -354,13 +588,51 @@ textarea#detail:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(20
     <div id="history-list"></div>
   </div>
 
+  <!-- Dynamic Landing View Page (Shows when QR Code is scanned) -->
+  <div id="landing-page">
+    <div class="landing-card">
+      <div class="print-header" style="text-align: center;">
+        <div class="print-brand">Naitik <span>Rakesh Kumar Jain</span></div>
+        <div class="print-sub">Salumber, Rajasthan</div>
+      </div>
+      <div class="detail-block" id="landing-detail-display" style="display:none"></div>
+      
+      <div id="landing-items-container"></div>
+
+      <button class="create-own-btn" onclick="openGeneratorDirectly()">✨ Create Your Own QR Code</button>
+    </div>
+  </div>
+
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
 /* ══════════════════════════════════
-   STORAGE
+   SIDEBAR MENU LOGIC
+══════════════════════════════════ */
+function openSidebar() {
+  const overlay = document.getElementById('sidebar-overlay');
+  const sidebar = document.getElementById('sidebar');
+  overlay.style.display = 'block';
+  setTimeout(() => {
+    overlay.classList.add('active');
+    sidebar.classList.add('active');
+  }, 10);
+}
+
+function closeSidebar() {
+  const overlay = document.getElementById('sidebar-overlay');
+  const sidebar = document.getElementById('sidebar');
+  overlay.classList.remove('active');
+  sidebar.classList.remove('active');
+  setTimeout(() => {
+    overlay.style.display = 'none';
+  }, 300);
+}
+
+/* ══════════════════════════════════
+   STORAGE & HISTORY
 ══════════════════════════════════ */
 function getHistory() {
   try { return JSON.parse(localStorage.getItem('qr_history') || '[]'); } catch { return []; }
@@ -369,20 +641,15 @@ function saveHistory(arr) {
   localStorage.setItem('qr_history', JSON.stringify(arr));
 }
 
-/* ══════════════════════════════════
-   TAB SWITCHING
-══════════════════════════════════ */
 function switchTab(tab) {
   document.getElementById('generator-page').style.display = tab === 'generator' ? 'flex' : 'none';
   document.getElementById('history-page').style.display = tab === 'history' ? 'block' : 'none';
+  document.getElementById('landing-page').style.display = 'none';
   document.getElementById('tab-generator').classList.toggle('active', tab === 'generator');
   document.getElementById('tab-history').classList.toggle('active', tab === 'history');
   if (tab === 'history') renderHistory();
 }
 
-/* ══════════════════════════════════
-   HISTORY
-══════════════════════════════════ */
 function renderHistory() {
   const history = getHistory();
   const container = document.getElementById('history-list');
@@ -403,7 +670,7 @@ function renderHistory() {
     div.className = 'history-item';
     const chips = item.entries.map(e => {
       const icon = e.icon || '📞';
-      const label = e.badgeLabel || e.val || e.phone || '';
+      const label = e.badgeLabel || e.val || '';
       const nameStr = e.name ? e.name + ' – ' : '';
       return `<div class="history-entry-chip"><span>${icon} ${nameStr}</span>${label}</div>`;
     }).join('');
@@ -430,15 +697,15 @@ function addToHistory(entries, detail) {
 let entryCount = 0;
 
 const TYPE_CONFIG = {
-  phone:     { icon: '📞', placeholder: 'e.g. number', type: 'tel' },
-  email:     { icon: '✉️', placeholder: 'e.g. name@example.com', type: 'email' },
-  map:       { icon: '📍', placeholder: 'Address, City or Google Maps Link', type: 'text' },
-  youtube:   { icon: '▶️', placeholder: 'Channel handle e.g. @channel or URL', type: 'text' },
-  facebook:  { icon: '👤', placeholder: 'Facebook profile ID or Link', type: 'text' },
-  instagram: { icon: '📸', placeholder: 'Instagram @username or Link', type: 'text' },
-  whatsapp:  { icon: '💬', placeholder: 'WhatsApp No (e.g. 91number)', type: 'tel' },
-  telegram:  { icon: '✈️', placeholder: 'Telegram @username or Link', type: 'text' },
-  url:       { icon: '🌐', placeholder: 'e.g. https://example.com', type: 'url' }
+  phone:     { icon: '📞', labelName: 'Mobile Number', placeholder: 'e.g. 9876543210', type: 'tel' },
+  email:     { icon: '✉️', labelName: 'Email ID', placeholder: 'e.g. name@example.com', type: 'email' },
+  map:       { icon: '📍', labelName: 'Map Location', placeholder: 'Address, City or Google Maps Link', type: 'text' },
+  youtube:   { icon: '▶️', labelName: 'YouTube Channel', placeholder: 'Channel handle e.g. @channel or URL', type: 'text' },
+  facebook:  { icon: '👤', labelName: 'Facebook ID', placeholder: 'Facebook profile ID or Link', type: 'text' },
+  instagram: { icon: '📸', labelName: 'Instagram ID', placeholder: 'Instagram @username or Link', type: 'text' },
+  whatsapp:  { icon: '💬', labelName: 'WhatsApp Number', placeholder: 'WhatsApp No (e.g. 919876543210)', type: 'tel' },
+  telegram:  { icon: '✈️', labelName: 'Telegram ID', placeholder: 'Telegram @username or Link', type: 'text' },
+  url:       { icon: '🌐', labelName: 'Web Link', placeholder: 'e.g. https://example.com', type: 'url' }
 };
 
 function addEntry() {
@@ -469,7 +736,7 @@ function addEntry() {
     <div class="field-row">
       <div class="input-wrap">
         <span class="prefix" id="prefix-${id}">📞</span>
-        <input type="tel" id="val-${id}" placeholder="e.g. number"
+        <input type="tel" id="val-${id}" placeholder="e.g. 9876543210"
           onkeydown="if(event.key==='Enter') generateQR()">
       </div>
       <div class="input-wrap">
@@ -511,104 +778,96 @@ function updateEntryLabels() {
 }
 
 /* ══════════════════════════════════
-   FORMAT QR CONTENT
+   FORMAT ACTION URLS & BADGES
 ══════════════════════════════════ */
 function formatQRData(type, val) {
   val = val.trim();
-  let qrText = '';
+  let actionUrl = '';
   let badgeLabel = val;
-  let icon = '🌐';
+  const cfg = TYPE_CONFIG[type] || TYPE_CONFIG.phone;
+  const typeTitle = cfg.labelName;
+  const icon = cfg.icon;
 
   switch (type) {
     case 'phone':
       const cleanPhone = val.replace(/[^\d+]/g, '');
-      qrText = 'tel:' + cleanPhone;
+      actionUrl = 'tel:' + cleanPhone;
       badgeLabel = val;
-      icon = '📞';
       break;
 
     case 'email':
-      qrText = 'mailto:' + val;
+      actionUrl = 'mailto:' + val;
       badgeLabel = val;
-      icon = '✉️';
       break;
 
     case 'map':
       if (/^https?:\/\//i.test(val) || /^geo:/i.test(val)) {
-        qrText = val;
+        actionUrl = val;
       } else {
-        qrText = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(val);
+        actionUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(val);
       }
-      badgeLabel = val.length > 22 ? val.substring(0, 20) + '…' : val;
-      icon = '📍';
+      badgeLabel = val;
       break;
 
     case 'youtube':
       if (/^https?:\/\//i.test(val)) {
-        qrText = val;
+        actionUrl = val;
       } else if (val.startsWith('@')) {
-        qrText = 'https://www.youtube.com/' + val;
+        actionUrl = 'https://www.youtube.com/' + val;
       } else {
-        qrText = 'https://www.youtube.com/@' + val;
+        actionUrl = 'https://www.youtube.com/@' + val;
       }
       badgeLabel = val.startsWith('@') ? val : ('@' + val);
-      icon = '▶️';
       break;
 
     case 'facebook':
       if (/^https?:\/\//i.test(val)) {
-        qrText = val;
+        actionUrl = val;
       } else {
-        qrText = 'https://www.facebook.com/' + val.replace(/^@/, '');
+        actionUrl = 'https://www.facebook.com/' + val.replace(/^@/, '');
       }
       badgeLabel = val.replace(/^https?:\/\/(www\.)?facebook\.com\//i, '');
-      icon = '👤';
       break;
 
     case 'instagram':
       if (/^https?:\/\//i.test(val)) {
-        qrText = val;
+        actionUrl = val;
       } else {
-        qrText = 'https://www.instagram.com/' + val.replace(/^@/, '');
+        actionUrl = 'https://www.instagram.com/' + val.replace(/^@/, '');
       }
       badgeLabel = val.startsWith('@') ? val : ('@' + val.replace(/^https?:\/\/(www\.)?instagram\.com\//i, ''));
-      icon = '📸';
       break;
 
     case 'whatsapp':
       const waNum = val.replace(/[^\d]/g, '');
-      qrText = 'https://wa.me/' + waNum;
-      badgeLabel = 'WA: ' + val;
-      icon = '💬';
+      actionUrl = 'https://wa.me/' + waNum;
+      badgeLabel = val;
       break;
 
     case 'telegram':
       if (/^https?:\/\//i.test(val)) {
-        qrText = val;
+        actionUrl = val;
       } else {
-        qrText = 'https://t.me/' + val.replace(/^@/, '');
+        actionUrl = 'https://t.me/' + val.replace(/^@/, '');
       }
       badgeLabel = val.startsWith('@') ? val : ('@' + val.replace(/^https?:\/\/t\.me\//i, ''));
-      icon = '✈️';
       break;
 
     case 'url':
       if (/^https?:\/\//i.test(val)) {
-        qrText = val;
+        actionUrl = val;
       } else {
-        qrText = 'https://' + val;
+        actionUrl = 'https://' + val;
       }
       badgeLabel = val;
-      icon = '🌐';
       break;
 
     default:
-      qrText = val;
+      actionUrl = val;
       badgeLabel = val;
-      icon = '🔗';
   }
 
-  return { qrText, badgeLabel, icon };
+  return { typeTitle, actionUrl, badgeLabel, icon };
 }
 
 /* ══════════════════════════════════
@@ -625,29 +884,22 @@ function addCenterLogoToCanvas(canvas, size, logoSrc) {
     const radius = logoSize / 2;
 
     ctx.save();
-
-    // Solid white/cream circle background behind logo
     ctx.beginPath();
     ctx.arc(center, center, radius + 2, 0, Math.PI * 2, false);
     ctx.fillStyle = '#f5f0e8';
     ctx.fill();
 
-    // Clip circular shape
     ctx.beginPath();
     ctx.arc(center, center, radius, 0, Math.PI * 2, false);
     ctx.closePath();
     ctx.clip();
 
-    // Draw xyz.png
     ctx.drawImage(img, center - radius, center - radius, logoSize, logoSize);
     ctx.restore();
 
-    // Sync generated img tag if present
     const imgTag = canvas.parentNode ? canvas.parentNode.querySelector('img') : null;
     if (imgTag) {
-      try {
-        imgTag.src = canvas.toDataURL();
-      } catch(e) {}
+      try { imgTag.src = canvas.toDataURL(); } catch(e) {}
     }
   };
 }
@@ -656,7 +908,6 @@ function addCenterLogoToCanvas(canvas, size, logoSrc) {
    RENDER QR SAFELY
 ══════════════════════════════════ */
 function renderQRCodeSafely(container, text, size) {
-  // Use High Error Correction level so QR codes remain 100% scannable with center logo
   const levels = [
     QRCode.CorrectLevel.H,
     QRCode.CorrectLevel.Q,
@@ -678,16 +929,13 @@ function renderQRCodeSafely(container, text, size) {
       });
       rendered = true;
       break;
-    } catch (e) {
-      // Fallback ECC level
-    }
+    } catch (e) {}
   }
 
   if (!rendered) {
     throw new Error('Data capacity exceeded.');
   }
 
-  // Draw circular xyz.png logo on canvas
   const canvas = container.querySelector('canvas');
   if (canvas) {
     addCenterLogoToCanvas(canvas, size, 'xyz.png');
@@ -695,7 +943,7 @@ function renderQRCodeSafely(container, text, size) {
 }
 
 /* ══════════════════════════════════
-   GENERATE QR
+   GENERATE SINGLE QR FOR ALL ITEMS
 ══════════════════════════════════ */
 let capturedLabels = [];
 
@@ -718,7 +966,8 @@ function generateQR() {
         type,
         val,
         name,
-        qrText: formatted.qrText,
+        typeTitle: formatted.typeTitle,
+        actionUrl: formatted.actionUrl,
         badgeLabel: formatted.badgeLabel,
         icon: formatted.icon
       });
@@ -730,44 +979,49 @@ function generateQR() {
   const detail = document.getElementById('detail').value.trim();
   capturedLabels = data.map(d => d.badgeLabel);
 
+  // Encode JSON payload to create single URL
+  const payload = {
+    detail: detail,
+    items: data
+  };
+
+  const jsonStr = JSON.stringify(payload);
+  const encodedData = encodeURIComponent(btoa(unescape(encodeURIComponent(jsonStr))));
+  
+  // Single target Landing URL
+  const baseUrl = window.location.href.split('#')[0];
+  const finalQrUrl = baseUrl + '#view=' + encodedData;
+
   const grid = document.getElementById('qr-grid');
   grid.innerHTML = '';
-  const qrSize = data.length === 1 ? 220 : 160;
 
   try {
-    data.forEach((itemData) => {
-      const item = document.createElement('div');
-      item.className = 'qr-item';
-      
-      const box = document.createElement('div');
-      box.className = 'qr-box';
-      
-      const qrEl = document.createElement('div');
-      box.appendChild(qrEl);
+    const item = document.createElement('div');
+    item.className = 'qr-item';
+    
+    const box = document.createElement('div');
+    box.className = 'qr-box';
+    
+    const qrEl = document.createElement('div');
+    box.appendChild(qrEl);
 
-      // Render base QR code
-      renderQRCodeSafely(qrEl, itemData.qrText, qrSize);
+    // Render single QR code
+    renderQRCodeSafely(qrEl, finalQrUrl, 230);
 
-      // Overlay circular xyz.png logo in DOM (Guarantees visual display on all devices)
-      const logoOverlay = document.createElement('img');
-      logoOverlay.src = 'xyz.png';
-      logoOverlay.className = 'qr-center-logo';
-      logoOverlay.alt = 'Logo';
-      box.appendChild(logoOverlay);
+    // Center Logo overlay
+    const logoOverlay = document.createElement('img');
+    logoOverlay.src = 'xyz.png';
+    logoOverlay.className = 'qr-center-logo';
+    logoOverlay.alt = 'Logo';
+    box.appendChild(logoOverlay);
 
-      const nameEl = document.createElement('div');
-      nameEl.className = 'qr-name';
-      nameEl.textContent = itemData.name || '';
+    const badge = document.createElement('div');
+    badge.className = 'phone-badge';
+    badge.innerHTML = `<span>⚡</span> <span>Scan to access all links (${data.length})</span>`;
 
-      const badge = document.createElement('div');
-      badge.className = 'phone-badge';
-      badge.innerHTML = `<span>${itemData.icon}</span> <span>${itemData.badgeLabel}</span>`;
-
-      item.appendChild(box);
-      if (itemData.name) item.appendChild(nameEl);
-      item.appendChild(badge);
-      grid.appendChild(item);
-    });
+    item.appendChild(box);
+    item.appendChild(badge);
+    grid.appendChild(item);
 
     const det = document.getElementById('detail-display');
     if (detail) { det.textContent = detail; det.style.display = 'block'; }
@@ -776,12 +1030,92 @@ function generateQR() {
     const rs = document.getElementById('result-section');
     rs.style.display = 'block';
     setTimeout(() => rs.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
-    toast('✅ QR Code' + (data.length > 1 ? 's' : '') + ' ready!');
+    toast('✅ Single QR Code created for all items!');
 
     addToHistory(data, detail);
   } catch (err) {
     toast('⚠️ Error generating QR code.');
   }
+}
+
+/* ══════════════════════════════════
+   SCANNED LANDING PAGE VIEW
+══════════════════════════════════ */
+function checkScannedUrlView() {
+  const hash = window.location.hash;
+  if (hash.startsWith('#view=')) {
+    try {
+      const encodedData = hash.replace('#view=', '');
+      const jsonStr = decodeURIComponent(escape(atob(decodeURIComponent(encodedData))));
+      const payload = JSON.parse(jsonStr);
+
+      renderLandingPage(payload);
+    } catch(e) {
+      toast('❌ Invalid or corrupted QR Code data');
+    }
+  }
+}
+
+function renderLandingPage(payload) {
+  // Hide main app components
+  document.getElementById('generator-page').style.display = 'none';
+  document.getElementById('history-page').style.display = 'none';
+  document.getElementById('app-tabs').style.display = 'none';
+
+  // Show Landing Page
+  const landingPage = document.getElementById('landing-page');
+  landingPage.style.display = 'block';
+
+  // Detail note
+  const det = document.getElementById('landing-detail-display');
+  if (payload.detail) {
+    det.textContent = payload.detail;
+    det.style.display = 'block';
+  } else {
+    det.style.display = 'none';
+  }
+
+  // Items container
+  const container = document.getElementById('landing-items-container');
+  container.innerHTML = '';
+
+  payload.items.forEach((item, index) => {
+    const itemCard = document.createElement('div');
+    itemCard.className = 'link-item-card';
+
+    const titleText = item.name ? `${item.typeTitle} (${item.name})` : item.typeTitle;
+
+    itemCard.innerHTML = `
+      <div class="link-type-tag">
+        <span>${item.icon}</span> ${titleText}
+      </div>
+      <div class="link-value-text">${item.badgeLabel || item.val}</div>
+      <div class="link-btn-row">
+        <button class="btn-copy" onclick="copyToClipboard('${item.val.replace(/'/g, "\\'")}')">
+          📋 Copy
+        </button>
+        <a href="${item.actionUrl}" target="_blank" class="btn-go">
+          🚀 Go
+        </a>
+      </div>
+    `;
+    container.appendChild(itemCard);
+  });
+}
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    toast('📋 Copied to clipboard!');
+  }).catch(() => {
+    toast('❌ Copy failed');
+  });
+}
+
+function openGeneratorDirectly() {
+  window.location.hash = '';
+  document.getElementById('landing-page').style.display = 'none';
+  document.getElementById('app-tabs').style.display = 'flex';
+  switchTab('generator');
 }
 
 /* ══════════════════════════════════
@@ -868,7 +1202,10 @@ function toast(msg) {
 }
 
 // Init
-window.addEventListener('DOMContentLoaded', () => addEntry());
+window.addEventListener('DOMContentLoaded', () => {
+  addEntry();
+  checkScannedUrlView();
+});
 </script>
 </body>
 </html>
