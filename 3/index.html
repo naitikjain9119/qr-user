@@ -905,10 +905,10 @@ function addCenterLogoToCanvas(canvas, size, logoSrc) {
 }
 
 /* ══════════════════════════════════
-   RENDER QR SAFELY (OPTIMIZED FOR FAST SCAN & LOW COMPLEXITY)
+   RENDER QR SAFELY (LOW COMPLEXITY & ULTRA FAST SCANNING)
 ══════════════════════════════════ */
 function renderQRCodeSafely(container, text, size) {
-  // Use Medium error level first to keep the matrix dots larger, clean and fast-scanning
+  // Level M (~15%) keeps dots large, visual complexity minimal and allows fast, smooth camera scanning
   const levels = [
     QRCode.CorrectLevel.M,
     QRCode.CorrectLevel.L,
@@ -980,18 +980,23 @@ function generateQR() {
   const detail = document.getElementById('detail').value.trim();
   capturedLabels = data.map(d => d.badgeLabel);
 
-  // Compact payload structure: strips redundant properties to keep URL extremely short & QR matrix simple
+  // Compact array payload: strips redundant fields to keep QR code matrix low-density and ultra clean
   const compactPayload = {
     d: detail,
     i: data.map(item => item.name ? [item.type, item.val, item.name] : [item.type, item.val])
   };
 
   const jsonStr = JSON.stringify(compactPayload);
-  const encodedData = encodeURIComponent(btoa(unescape(encodeURIComponent(jsonStr))));
+  
+  // URL-safe Base64 Encoding without unnecessary percent-escapes
+  const base64Str = btoa(unescape(encodeURIComponent(jsonStr)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
   
   // Single target Landing URL
   const baseUrl = window.location.href.split('#')[0];
-  const finalQrUrl = baseUrl + '#view=' + encodedData;
+  const finalQrUrl = baseUrl + '#view=' + base64Str;
 
   const grid = document.getElementById('qr-grid');
   grid.innerHTML = '';
@@ -1047,8 +1052,18 @@ function checkScannedUrlView() {
   if (hash.startsWith('#view=')) {
     try {
       const encodedData = hash.replace('#view=', '');
-      const jsonStr = decodeURIComponent(escape(atob(decodeURIComponent(encodedData))));
-      const payload = JSON.parse(jsonStr);
+      let payload;
+
+      // Resilient multi-format decoder (handles both URL-safe Base64 and standard URI encoded strings)
+      try {
+        let b64 = decodeURIComponent(encodedData).replace(/-/g, '+').replace(/_/g, '/');
+        while (b64.length % 4 !== 0) { b64 += '='; }
+        const jsonStr = decodeURIComponent(escape(atob(b64)));
+        payload = JSON.parse(jsonStr);
+      } catch (e1) {
+        const jsonStr = decodeURIComponent(escape(atob(decodeURIComponent(encodedData))));
+        payload = JSON.parse(jsonStr);
+      }
 
       renderLandingPage(payload);
     } catch(e) {
