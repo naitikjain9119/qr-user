@@ -322,8 +322,8 @@ textarea#detail:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(20
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 10%;
-  height: 10%;
+  width: 15%;
+  height: 15%;
   border-radius: 50%;
   object-fit: cover;
   background: var(--paper);
@@ -542,7 +542,7 @@ textarea#detail:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(20
   <div id="generator-page" style="width:100%;display:flex;flex-direction:column;align-items:center;">
     <header>
       <div class="eyebrow">QR Generator</div>
-      <h1> info <span>  setu <infon></h1>
+      <h1> info <span>  setu </span></h1>
       <p class="sub">Numbers, Emails, Socials & Links → One Single QR Code</p>
     </header>
 
@@ -879,7 +879,7 @@ function addCenterLogoToCanvas(canvas, size, logoSrc) {
   img.src = logoSrc;
 
   img.onload = function() {
-    const logoSize = Math.floor(size * 0.24);
+    const logoSize = Math.floor(size * 0.15);
     const center = size / 2;
     const radius = logoSize / 2;
 
