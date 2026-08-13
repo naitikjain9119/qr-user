@@ -975,7 +975,7 @@ function generateQR() {
     }
   }
 
-  if (data.length === 0) { toast('⚠️ Kum se kum ek value daalo'); return; }
+  if (data.length === 0) { toast('⚠️ Enter at least one value '); return; }
 
   const detail = document.getElementById('detail').value.trim();
   capturedLabels = data.map(d => d.badgeLabel);
