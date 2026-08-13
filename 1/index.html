@@ -905,14 +905,15 @@ function addCenterLogoToCanvas(canvas, size, logoSrc) {
 }
 
 /* ══════════════════════════════════
-   RENDER QR SAFELY
+   RENDER QR SAFELY (OPTIMIZED FOR FAST SCAN & LOW COMPLEXITY)
 ══════════════════════════════════ */
 function renderQRCodeSafely(container, text, size) {
+  // Use Medium error level first to keep the matrix dots larger, clean and fast-scanning
   const levels = [
-    QRCode.CorrectLevel.H,
-    QRCode.CorrectLevel.Q,
     QRCode.CorrectLevel.M,
-    QRCode.CorrectLevel.L
+    QRCode.CorrectLevel.L,
+    QRCode.CorrectLevel.Q,
+    QRCode.CorrectLevel.H
   ];
   let rendered = false;
 
@@ -979,13 +980,13 @@ function generateQR() {
   const detail = document.getElementById('detail').value.trim();
   capturedLabels = data.map(d => d.badgeLabel);
 
-  // Encode JSON payload to create single URL
-  const payload = {
-    detail: detail,
-    items: data
+  // Compact payload structure: strips redundant properties to keep URL extremely short & QR matrix simple
+  const compactPayload = {
+    d: detail,
+    i: data.map(item => item.name ? [item.type, item.val, item.name] : [item.type, item.val])
   };
 
-  const jsonStr = JSON.stringify(payload);
+  const jsonStr = JSON.stringify(compactPayload);
   const encodedData = encodeURIComponent(btoa(unescape(encodeURIComponent(jsonStr))));
   
   // Single target Landing URL
@@ -1066,10 +1067,12 @@ function renderLandingPage(payload) {
   const landingPage = document.getElementById('landing-page');
   landingPage.style.display = 'block';
 
+  const detailText = payload.d !== undefined ? payload.d : payload.detail;
+
   // Detail note
   const det = document.getElementById('landing-detail-display');
-  if (payload.detail) {
-    det.textContent = payload.detail;
+  if (detailText) {
+    det.textContent = detailText;
     det.style.display = 'block';
   } else {
     det.style.display = 'none';
@@ -1079,22 +1082,49 @@ function renderLandingPage(payload) {
   const container = document.getElementById('landing-items-container');
   container.innerHTML = '';
 
-  payload.items.forEach((item, index) => {
+  const rawItems = payload.i || payload.items || [];
+
+  rawItems.forEach((rawItem) => {
+    let type, val, name, typeTitle, actionUrl, badgeLabel, icon;
+
+    if (Array.isArray(rawItem)) {
+      type = rawItem[0] || 'phone';
+      val = rawItem[1] || '';
+      name = rawItem[2] || '';
+    } else if (typeof rawItem === 'object' && rawItem !== null) {
+      type = rawItem.t || rawItem.type || 'phone';
+      val = rawItem.v || rawItem.val || '';
+      name = rawItem.n || rawItem.name || '';
+      typeTitle = rawItem.typeTitle;
+      actionUrl = rawItem.actionUrl;
+      badgeLabel = rawItem.badgeLabel;
+      icon = rawItem.icon;
+    }
+
+    if (!val) return;
+
+    const formatted = formatQRData(type, val);
+    typeTitle = typeTitle || formatted.typeTitle;
+    actionUrl = actionUrl || formatted.actionUrl;
+    badgeLabel = badgeLabel || formatted.badgeLabel;
+    icon = icon || formatted.icon;
+
     const itemCard = document.createElement('div');
     itemCard.className = 'link-item-card';
 
-    const titleText = item.name ? `${item.typeTitle} (${item.name})` : item.typeTitle;
+    const titleText = name ? `${typeTitle} (${name})` : typeTitle;
+    const safeCopyVal = val.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
     itemCard.innerHTML = `
       <div class="link-type-tag">
-        <span>${item.icon}</span> ${titleText}
+        <span>${icon}</span> ${titleText}
       </div>
-      <div class="link-value-text">${item.badgeLabel || item.val}</div>
+      <div class="link-value-text">${badgeLabel || val}</div>
       <div class="link-btn-row">
-        <button class="btn-copy" onclick="copyToClipboard('${item.val.replace(/'/g, "\\'")}')">
+        <button class="btn-copy" onclick="copyToClipboard('${safeCopyVal}')">
           📋 Copy
         </button>
-        <a href="${item.actionUrl}" target="_blank" class="btn-go">
+        <a href="${actionUrl}" target="_blank" class="btn-go">
           🚀 Go
         </a>
       </div>
