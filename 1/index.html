@@ -316,7 +316,7 @@ textarea#detail:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(20
 .qr-box { display: flex; justify-content: center; align-items: center; padding: 14px; background: var(--paper); border-radius: 14px; position: relative; }
 .qr-box canvas, .qr-box img { border-radius: 6px; display: block; }
 
-/* Style for central circular logo overlay (xyz.png) */
+/* Style for central circular logo overlay (aa.png) */
 .qr-center-logo {
   position: absolute;
   top: 50%;
@@ -939,7 +939,7 @@ function renderQRCodeSafely(container, text, size) {
 
   const canvas = container.querySelector('canvas');
   if (canvas) {
-    addCenterLogoToCanvas(canvas, size, 'xyz.png');
+    addCenterLogoToCanvas(canvas, size, 'aa.png');
   }
 }
 
@@ -1011,7 +1011,7 @@ function generateQR() {
 
     // Center Logo overlay
     const logoOverlay = document.createElement('img');
-    logoOverlay.src = 'xyz.png';
+    logoOverlay.src = 'aa.png';
     logoOverlay.className = 'qr-center-logo';
     logoOverlay.alt = 'Logo';
     box.appendChild(logoOverlay);
